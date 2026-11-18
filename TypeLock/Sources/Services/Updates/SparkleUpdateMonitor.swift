@@ -133,7 +133,6 @@ final class SparkleUpdateMonitor: NSObject, ObservableObject {
 }
 
 extension SparkleUpdateMonitor: SPUUpdaterDelegate {
-
     func allowedChannels(for _: SPUUpdater) -> Set<String> {
         UpdateChannelPreferences.receivesBetaUpdates ? ["beta"] : []
     }

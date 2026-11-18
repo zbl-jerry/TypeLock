@@ -34,6 +34,7 @@ guard AXUIElementCopyAttributeValue(
 else {
     exit(5)
 }
+
 guard AXUIElementCopyAttributeValue(
     focused,
     kAXSizeAttribute as CFString,

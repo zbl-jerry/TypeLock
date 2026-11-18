@@ -1,5 +1,5 @@
-import XCTest
 @testable import TypeLock
+import XCTest
 
 final class BrowserRuleTests: XCTestCase {
     private func rule(

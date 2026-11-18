@@ -752,7 +752,8 @@ private struct HotkeysSettingsPane: View {
                             .foregroundStyle(.secondary)
                         Button(recorder.recordingInputMethodId == inputMethod.id
                             ? "settings.hotkeys.recording"
-                            : "settings.hotkeys.record") {
+                            : "settings.hotkeys.record")
+                        {
                             startRecording(for: inputMethod.id)
                         }
                         Button("settings.hotkeys.clear") {

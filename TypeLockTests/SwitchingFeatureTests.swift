@@ -65,9 +65,6 @@ final class SwitchingFeatureTests: XCTestCase {
         XCTAssertEqual(switchedInputMethods, [targetInputMethod])
     }
 
-
-
-
     func testTerminalRuleOverridesAppActivationStrategy() async {
         let app = AppInfo(
             bundleId: "com.apple.Terminal",

@@ -1,6 +1,6 @@
 import CoreGraphics
-import XCTest
 @testable import TypeLock
+import XCTest
 
 final class IndicatorLayoutTests: XCTestCase {
     private let screen = CGRect(x: 0, y: 0, width: 1_000, height: 800)

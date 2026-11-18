@@ -151,7 +151,6 @@ final class AppStorageCompatibilityTests: XCTestCase {
         XCTAssertEqual(store.launchStrategy, .none)
     }
 
-
     func testHotkeyPreferencesRoundTripsAndDetectsConflicts() throws {
         var preferences = HotkeyPreferences()
         let commandSpace = HotkeyBinding(
