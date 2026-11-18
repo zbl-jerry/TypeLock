@@ -305,6 +305,8 @@ final class AppFeatureTests: XCTestCase {
             $0.$appRulesStore.withLock { $0 = payload.appRulesStore }
             $0.$fallbackRuleStore.withLock { $0 = payload.fallbackRuleStore }
             $0.$appSwitchStatisticsStore.withLock { $0 = payload.appSwitchStatisticsStore }
+            $0.$exclusionsStore.withLock { $0 = payload.exclusionsStore }
+            $0.$indicatorPreferences.withLock { $0 = payload.indicatorPreferences }
         }
 
         XCTAssertEqual(store.state.appRules, payload.appRulesStore.rules)

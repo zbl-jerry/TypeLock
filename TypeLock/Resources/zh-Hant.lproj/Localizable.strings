@@ -164,3 +164,25 @@
 "settings.exclusions.add" = "新增 App";
 "settings.exclusions.empty" = "尚無排除項目";
 "settings.exclusions.remove" = "移除";
+
+// 輸入法提示
+"settings.indicator.enabled" = "啟用輸入法提示";
+"settings.indicator.only_on_change" = "僅在輸入法變更時提示";
+"settings.indicator.prefer_cursor" = "優先於文字游標位置顯示";
+"settings.indicator.only_at_cursor" = "僅於文字游標位置顯示";
+"settings.indicator.duration" = "顯示時間";
+"settings.indicator.position" = "提示視窗位置";
+"settings.indicator.position.screen" = "螢幕";
+"settings.indicator.position.mouse" = "滑鼠";
+"settings.indicator.cursor_position" = "游標提示位置";
+"settings.indicator.cursor.above" = "上方";
+"settings.indicator.cursor.below" = "下方";
+"settings.indicator.cursor.right" = "右側";
+"settings.indicator.style" = "提示樣式";
+"settings.indicator.style.icon_and_title" = "圖示加文字";
+"settings.indicator.style.icon_only" = "僅圖示";
+"settings.indicator.style.title_only" = "僅文字";
+"settings.indicator.size" = "提示尺寸";
+"settings.indicator.size.normal" = "正常";
+"settings.indicator.size.medium" = "中等";
+"settings.indicator.size.large" = "超大";

@@ -29,6 +29,8 @@ struct SettingsRootView: View {
                         GeneralSettingsPane(store: store)
                     case .apps:
                         AppRulesSettingsPane(store: store)
+                    case .indicator:
+                        IndicatorSettingsPane(store: store)
                     case .exclusions:
                         ExclusionsSettingsPane(store: store)
                     case .troubleshooting:
@@ -266,7 +268,9 @@ private struct GeneralSettingsPane: View {
             ) as? String ?? "unknown",
             buildVersion: Bundle.main.object(
                 forInfoDictionaryKey: "CFBundleVersion"
-            ) as? String ?? "unknown"
+            ) as? String ?? "unknown",
+            exclusionsStore: store.exclusions,
+            indicatorPreferences: store.indicator
         )
     }
 
@@ -277,7 +281,9 @@ private struct GeneralSettingsPane: View {
                 rules: store.appRules
             ),
             fallbackRuleStore: store.fallbackRule,
-            appSwitchStatisticsStore: store.appSwitchStatistics
+            appSwitchStatisticsStore: store.appSwitchStatistics,
+            exclusionsStore: store.exclusions,
+            indicatorPreferences: store.indicator
         )
     }
 }
@@ -484,6 +490,112 @@ private struct ActivationStrategyMenuContent: View {
             Text(title)
         }
         .toggleStyle(.checkbox)
+    }
+}
+
+private struct IndicatorSettingsPane: View {
+    let store: StoreOf<AppFeature>
+
+    private func update(_ change: (inout IndicatorPreferences) -> Void) {
+        var draft = store.indicator
+        change(&draft)
+        store.send(.view(.setIndicatorPreferences(draft)))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SettingsRow {
+                Toggle("settings.indicator.enabled", isOn: Binding(
+                    get: { store.indicator.enabled },
+                    set: { value in update { $0.enabled = value } }
+                ))
+                .toggleStyle(.switch)
+            }
+
+            SettingsRow {
+                Toggle("settings.indicator.only_on_change", isOn: Binding(
+                    get: { store.indicator.onlyOnChange },
+                    set: { value in update { $0.onlyOnChange = value } }
+                ))
+                .toggleStyle(.switch)
+            }
+
+            SettingsRow {
+                Toggle("settings.indicator.prefer_cursor", isOn: Binding(
+                    get: { store.indicator.preferCursor },
+                    set: { value in update { $0.preferCursor = value } }
+                ))
+                .toggleStyle(.switch)
+            }
+
+            SettingsRow {
+                Toggle("settings.indicator.only_at_cursor", isOn: Binding(
+                    get: { store.indicator.onlyAtCursor },
+                    set: { value in update { $0.onlyAtCursor = value } }
+                ))
+                .toggleStyle(.switch)
+            }
+
+            SettingsRow {
+                Picker("settings.indicator.duration", selection: Binding(
+                    get: { store.indicator.duration },
+                    set: { value in update { $0.duration = value } }
+                )) {
+                    ForEach(IndicatorDuration.allCases) { duration in
+                        Text("\(Int(duration.rawValue))s").tag(duration)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+
+            SettingsRow {
+                Picker("settings.indicator.position", selection: Binding(
+                    get: { store.indicator.position },
+                    set: { value in update { $0.position = value } }
+                )) {
+                    Text("settings.indicator.position.screen").tag(IndicatorPosition.screen)
+                    Text("settings.indicator.position.mouse").tag(IndicatorPosition.mouse)
+                }
+                .pickerStyle(.segmented)
+            }
+
+            SettingsRow {
+                Picker("settings.indicator.cursor_position", selection: Binding(
+                    get: { store.indicator.cursorPosition },
+                    set: { value in update { $0.cursorPosition = value } }
+                )) {
+                    Text("settings.indicator.cursor.above").tag(IndicatorCursorPosition.above)
+                    Text("settings.indicator.cursor.below").tag(IndicatorCursorPosition.below)
+                    Text("settings.indicator.cursor.right").tag(IndicatorCursorPosition.right)
+                }
+                .pickerStyle(.segmented)
+            }
+
+            SettingsRow {
+                Picker("settings.indicator.style", selection: Binding(
+                    get: { store.indicator.style },
+                    set: { value in update { $0.style = value } }
+                )) {
+                    Text("settings.indicator.style.icon_and_title").tag(IndicatorStyle.iconAndTitle)
+                    Text("settings.indicator.style.icon_only").tag(IndicatorStyle.iconOnly)
+                    Text("settings.indicator.style.title_only").tag(IndicatorStyle.titleOnly)
+                }
+                .pickerStyle(.segmented)
+            }
+
+            SettingsRow {
+                Picker("settings.indicator.size", selection: Binding(
+                    get: { store.indicator.size },
+                    set: { value in update { $0.size = value } }
+                )) {
+                    Text("settings.indicator.size.normal").tag(IndicatorSize.normal)
+                    Text("settings.indicator.size.medium").tag(IndicatorSize.medium)
+                    Text("settings.indicator.size.large").tag(IndicatorSize.large)
+                }
+                .pickerStyle(.segmented)
+            }
+        }
+        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
     }
 }
 

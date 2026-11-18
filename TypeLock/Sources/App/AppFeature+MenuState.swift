@@ -43,6 +43,10 @@ extension AppFeature.State {
         exclusionsStore
     }
 
+    var indicator: IndicatorPreferences {
+        indicatorPreferences
+    }
+
     var menuBarIconSystemName: String {
         if inputMethodDiagnostic != nil {
             return "exclamationmark.triangle"

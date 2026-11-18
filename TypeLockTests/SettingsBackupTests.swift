@@ -39,7 +39,16 @@ final class SettingsBackupTests: XCTestCase {
             appVersion: "0.11.0",
             buildVersion: "42",
             exportedAt: timestamp,
-            includeStatistics: includeStatistics
+            includeStatistics: includeStatistics,
+            exclusionsStore: ExclusionsStore(
+                switchingBundleIds: ["com.test.terminal"],
+                indicatorBundleIds: ["com.test.chat"]
+            ),
+            indicatorPreferences: IndicatorPreferences(
+                enabled: true,
+                duration: .threeSeconds,
+                style: .iconOnly
+            )
         )
     }
 
@@ -51,6 +60,9 @@ final class SettingsBackupTests: XCTestCase {
         XCTAssertEqual(decoded, backup)
         XCTAssertEqual(decoded.appRules["com.test.chat"]?.launchStrategy, .inherit)
         XCTAssertEqual(decoded.statistics?["com.test.editor"], 3)
+        XCTAssertTrue(decoded.exclusions?.isExcludedFromSwitching("com.test.terminal") == true)
+        XCTAssertEqual(decoded.indicatorPreferences?.duration, .threeSeconds)
+        XCTAssertEqual(decoded.indicatorPreferences?.style, .iconOnly)
     }
 
     func testStatisticsAreOptional() throws {
@@ -74,6 +86,8 @@ final class SettingsBackupTests: XCTestCase {
         XCTAssertEqual(Set(payload.appRulesStore.rules.keys), Set(["com.test.editor", "com.test.chat"]))
         XCTAssertEqual(payload.fallbackRuleStore.strategy, .fixed(inputMethodId: "ime.abc"))
         XCTAssertEqual(payload.appSwitchStatisticsStore.counts, ["com.test.editor": 3])
+        XCTAssertTrue(payload.exclusionsStore.isExcludedFromSwitching("com.test.terminal"))
+        XCTAssertEqual(payload.indicatorPreferences.duration, .threeSeconds)
     }
 
     func testMergePayloadKeepsCurrentRulesAndImportedWins() throws {
@@ -103,6 +117,9 @@ final class SettingsBackupTests: XCTestCase {
         )
         XCTAssertEqual(payload.appSwitchStatisticsStore.counts["com.test.current"], 9)
         XCTAssertEqual(payload.appSwitchStatisticsStore.counts["com.test.editor"], 3)
+        XCTAssertTrue(payload.exclusionsStore.isExcludedFromSwitching("com.test.terminal"))
+        XCTAssertTrue(payload.exclusionsStore.isExcludedFromIndicator("com.test.chat"))
+        XCTAssertEqual(payload.indicatorPreferences.duration, .threeSeconds)
     }
 
     func testRejectsUnsupportedSchemaVersion() {

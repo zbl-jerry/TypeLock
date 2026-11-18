@@ -164,3 +164,25 @@
 "settings.exclusions.add" = "Add App";
 "settings.exclusions.empty" = "No exclusions";
 "settings.exclusions.remove" = "Remove";
+
+// Indicator
+"settings.indicator.enabled" = "Show Indicator";
+"settings.indicator.only_on_change" = "Only When Input Method Changes";
+"settings.indicator.prefer_cursor" = "Prefer Text Cursor";
+"settings.indicator.only_at_cursor" = "Only at Text Cursor";
+"settings.indicator.duration" = "Duration";
+"settings.indicator.position" = "Position";
+"settings.indicator.position.screen" = "Screen";
+"settings.indicator.position.mouse" = "Mouse";
+"settings.indicator.cursor_position" = "Cursor Position";
+"settings.indicator.cursor.above" = "Above";
+"settings.indicator.cursor.below" = "Below";
+"settings.indicator.cursor.right" = "Right";
+"settings.indicator.style" = "Style";
+"settings.indicator.style.icon_and_title" = "Icon + Text";
+"settings.indicator.style.icon_only" = "Icon Only";
+"settings.indicator.style.title_only" = "Text Only";
+"settings.indicator.size" = "Size";
+"settings.indicator.size.normal" = "Normal";
+"settings.indicator.size.medium" = "Medium";
+"settings.indicator.size.large" = "Large";

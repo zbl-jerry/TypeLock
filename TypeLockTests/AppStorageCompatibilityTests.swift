@@ -168,6 +168,42 @@ final class AppStorageCompatibilityTests: XCTestCase {
         XCTAssertTrue(store.isExcludedFromIndicator("com.test.chat"))
     }
 
+    func testIndicatorPreferencesRoundTripsAndMigrates() throws {
+        var preferences = IndicatorPreferences(
+            v: 1,
+            enabled: false,
+            onlyOnChange: false,
+            duration: .fiveSeconds,
+            position: .mouse,
+            style: .titleOnly,
+            size: .large
+        )
+
+        let data = try JSONEncoder().encode(preferences)
+        let decoded = try JSONDecoder().decode(IndicatorPreferences.self, from: data)
+        XCTAssertEqual(decoded, preferences)
+
+        preferences.migrateIfNeeded()
+        XCTAssertEqual(preferences.v, MigrationVersion.current)
+    }
+
+    func testIndicatorPreferencesURLUsesIndicatorFilename() {
+        let applicationSupportDirectory = URL(fileURLWithPath: "/tmp/Application Support", isDirectory: true)
+        let url = URL.indicatorPreferencesFileURL(
+            applicationSupportDirectory: applicationSupportDirectory,
+            bundleIdentifier: "com.test.TypeLock"
+        )
+
+        XCTAssertEqual(AppStorageConfiguration.indicatorPreferencesFilename, "indicator.json")
+        XCTAssertEqual(
+            url.path,
+            applicationSupportDirectory
+                .appending(path: "com.test.TypeLock", directoryHint: .isDirectory)
+                .appending(path: AppStorageConfiguration.indicatorPreferencesFilename)
+                .path
+        )
+    }
+
     func testExclusionsStoreURLUsesExclusionsFilename() {
         let applicationSupportDirectory = URL(fileURLWithPath: "/tmp/Application Support", isDirectory: true)
         let url = URL.exclusionsStoreFileURL(

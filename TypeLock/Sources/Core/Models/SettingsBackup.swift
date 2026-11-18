@@ -29,6 +29,22 @@ struct SettingsImportPayload: Equatable, Sendable {
     let appRulesStore: AppRulesStore
     let fallbackRuleStore: FallbackRuleStore
     let appSwitchStatisticsStore: AppSwitchStatisticsStore
+    let exclusionsStore: ExclusionsStore
+    let indicatorPreferences: IndicatorPreferences
+
+    init(
+        appRulesStore: AppRulesStore,
+        fallbackRuleStore: FallbackRuleStore,
+        appSwitchStatisticsStore: AppSwitchStatisticsStore,
+        exclusionsStore: ExclusionsStore = ExclusionsStore(),
+        indicatorPreferences: IndicatorPreferences = IndicatorPreferences()
+    ) {
+        self.appRulesStore = appRulesStore
+        self.fallbackRuleStore = fallbackRuleStore
+        self.appSwitchStatisticsStore = appSwitchStatisticsStore
+        self.exclusionsStore = exclusionsStore
+        self.indicatorPreferences = indicatorPreferences
+    }
 }
 
 struct SettingsBackup: Codable, Equatable, Sendable {
@@ -41,6 +57,8 @@ struct SettingsBackup: Codable, Equatable, Sendable {
     let appRules: [String: AppRuleRecord]
     let fallbackRule: FallbackRuleStore
     let statistics: [String: Int]?
+    let exclusions: ExclusionsStore?
+    let indicatorPreferences: IndicatorPreferences?
 
     init(
         appRulesStore: AppRulesStore,
@@ -49,7 +67,9 @@ struct SettingsBackup: Codable, Equatable, Sendable {
         appVersion: String,
         buildVersion: String,
         exportedAt: Date = Date(),
-        includeStatistics: Bool = false
+        includeStatistics: Bool = false,
+        exclusionsStore: ExclusionsStore? = nil,
+        indicatorPreferences: IndicatorPreferences? = nil
     ) {
         schemaVersion = Self.currentSchemaVersion
         self.exportedAt = exportedAt
@@ -58,6 +78,8 @@ struct SettingsBackup: Codable, Equatable, Sendable {
         appRules = appRulesStore.rules
         fallbackRule = fallbackRuleStore
         self.statistics = includeStatistics ? statistics.counts : nil
+        exclusions = exclusionsStore
+        self.indicatorPreferences = indicatorPreferences
     }
 
     func validate() throws {
@@ -100,6 +122,8 @@ struct SettingsBackup: Codable, Equatable, Sendable {
             launchStrategy: fallbackRule.launchStrategy
         )
         let importedStatistics = statistics ?? current.appSwitchStatisticsStore.counts
+        let importedExclusions = exclusions ?? current.exclusionsStore
+        let importedIndicator = indicatorPreferences ?? current.indicatorPreferences
 
         switch mode {
         case .replace:
@@ -111,7 +135,9 @@ struct SettingsBackup: Codable, Equatable, Sendable {
                 fallbackRuleStore: importedFallback,
                 appSwitchStatisticsStore: AppSwitchStatisticsStore(
                     counts: importedStatistics
-                )
+                ),
+                exclusionsStore: importedExclusions,
+                indicatorPreferences: importedIndicator
             )
         case .merge:
             var mergedRules = current.appRulesStore.rules
@@ -124,6 +150,10 @@ struct SettingsBackup: Codable, Equatable, Sendable {
                 mergedStatistics[bundleId] = count
             }
 
+            var mergedExclusions = current.exclusionsStore
+            mergedExclusions.switchingBundleIds.formUnion(importedExclusions.switchingBundleIds)
+            mergedExclusions.indicatorBundleIds.formUnion(importedExclusions.indicatorBundleIds)
+
             return SettingsImportPayload(
                 appRulesStore: AppRulesStore(
                     v: MigrationVersion.current,
@@ -132,7 +162,9 @@ struct SettingsBackup: Codable, Equatable, Sendable {
                 fallbackRuleStore: importedFallback,
                 appSwitchStatisticsStore: AppSwitchStatisticsStore(
                     counts: mergedStatistics
-                )
+                ),
+                exclusionsStore: mergedExclusions,
+                indicatorPreferences: importedIndicator
             )
         }
     }

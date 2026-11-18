@@ -41,6 +41,7 @@ struct AppFeature {
         @Shared var appSwitchStatisticsStore: AppSwitchStatisticsStore
         @Shared var fallbackRuleStore: FallbackRuleStore
         @Shared var exclusionsStore: ExclusionsStore
+        @Shared var indicatorPreferences: IndicatorPreferences
         var switching: SwitchingFeature.State
         var appAvailability = AppAvailabilitySnapshot()
         var isMenuPresented = false
@@ -66,6 +67,10 @@ struct AppFeature {
                 wrappedValue: ExclusionsStore(),
                 .fileStorage(.exclusionsStoreURL)
             ),
+            indicatorPreferences: Shared<IndicatorPreferences> = Shared(
+                wrappedValue: IndicatorPreferences(),
+                .fileStorage(.indicatorPreferencesURL)
+            ),
             appAvailability: AppAvailabilitySnapshot = AppAvailabilitySnapshot(),
             currentFrontmostBundleId: String? = nil,
             inputMethodCatalogStatus: SwitchingFeature.State.InputMethodCatalogStatus = .loading,
@@ -81,6 +86,7 @@ struct AppFeature {
             self._appSwitchStatisticsStore = appSwitchStatisticsStore
             self._fallbackRuleStore = fallbackRuleStore
             self._exclusionsStore = exclusionsStore
+            self._indicatorPreferences = indicatorPreferences
             self.switching = SwitchingFeature.State(
                 appRulesStore: appRulesStore,
                 appSwitchStatisticsStore: appSwitchStatisticsStore,
@@ -111,6 +117,7 @@ struct AppFeature {
         case restoreIgnoredAppTapped(bundleId: String)
         case retryCurrentAppTapped
         case setIndicatorExclusion(bundleId: String, excluded: Bool)
+        case setIndicatorPreferences(IndicatorPreferences)
         case setSwitchingExclusion(bundleId: String, excluded: Bool)
         case setFallbackStrategy(InputMethodStrategy)
         case setFallbackLaunchStrategy(InputMethodStrategy)
@@ -164,6 +171,7 @@ struct AppFeature {
                 state.$appRulesStore.withLock { $0.migrateIfNeeded() }
                 state.$fallbackRuleStore.withLock { $0.migrateIfNeeded() }
                 state.$exclusionsStore.withLock { $0.migrateIfNeeded() }
+                state.$indicatorPreferences.withLock { $0.migrateIfNeeded() }
                 state.appAvailability = appAvailabilityClient.snapshot(for: state.appRules.values)
                 normalizeFallbackRule(in: &state)
                 let initialSwitchingEffect = reduceSwitching(.loadInitialState, state: &state)
@@ -196,6 +204,8 @@ struct AppFeature {
                 state.$appRulesStore.withLock { $0 = payload.appRulesStore }
                 state.$fallbackRuleStore.withLock { $0 = payload.fallbackRuleStore }
                 state.$appSwitchStatisticsStore.withLock { $0 = payload.appSwitchStatisticsStore }
+                state.$exclusionsStore.withLock { $0 = payload.exclusionsStore }
+                state.$indicatorPreferences.withLock { $0 = payload.indicatorPreferences }
                 return .none
 
             case .view(.clearSwitchStatisticsTapped):
@@ -313,6 +323,12 @@ struct AppFeature {
             case .view(.setIndicatorExclusion(let bundleId, let excluded)):
                 state.$exclusionsStore.withLock {
                     $0.setIndicatorExcluded(bundleId, excluded)
+                }
+                return .none
+
+            case .view(.setIndicatorPreferences(let preferences)):
+                state.$indicatorPreferences.withLock {
+                    $0 = preferences
                 }
                 return .none
 
