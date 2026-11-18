@@ -5,6 +5,7 @@ import Sharing
 /// Owns switching, catalog recovery, and frontmost retries as one event sequence.
 @Reducer
 struct SwitchingFeature {
+    @Dependency(\.browserURLClient) var browserURLClient
     @Dependency(\.date.now) var now
     @Dependency(\.indicatorClient) var indicatorClient
     @Dependency(\.inputMethodClient) var inputMethodClient
@@ -72,6 +73,7 @@ struct SwitchingFeature {
         @Shared var fallbackRuleStore: FallbackRuleStore
         @Shared var exclusionsStore: ExclusionsStore
         @Shared var indicatorPreferences: IndicatorPreferences
+        @Shared var browserRulesStore: BrowserRulesStore
         var currentFrontmostBundleId: String?
         var inputMethodCatalogStatus: InputMethodCatalogStatus = .loading
         var inputMethods: [InputMethod] = []
@@ -97,6 +99,10 @@ struct SwitchingFeature {
                 wrappedValue: IndicatorPreferences(),
                 .fileStorage(.indicatorPreferencesURL)
             ),
+            browserRulesStore: Shared<BrowserRulesStore> = Shared(
+                wrappedValue: BrowserRulesStore(),
+                .fileStorage(.browserRulesURL)
+            ),
             currentFrontmostBundleId: String? = nil,
             inputMethodCatalogStatus: InputMethodCatalogStatus = .loading,
             inputMethods: [InputMethod] = [],
@@ -107,6 +113,7 @@ struct SwitchingFeature {
             self._fallbackRuleStore = fallbackRuleStore
             self._exclusionsStore = exclusionsStore
             self._indicatorPreferences = indicatorPreferences
+            self._browserRulesStore = browserRulesStore
             self.currentFrontmostBundleId = currentFrontmostBundleId
             self.inputMethodCatalogStatus = inputMethodCatalogStatus
             self.inputMethods = inputMethods
@@ -519,7 +526,12 @@ struct SwitchingFeature {
         }
 
         let resolution: SwitchResolver.Resolution
-        if isLaunch {
+        if let browserRule = matchingBrowserRule(state: state) {
+            resolution = SwitchResolver.Resolution(
+                strategy: .fixed(inputMethodId: browserRule.inputMethodId),
+                source: .app
+            )
+        } else if isLaunch {
             resolution = SwitchResolver.resolveLaunch(
                 appStrategy: state.appRulesStore.rules[bundleId]?.launchStrategy ?? .inherit,
                 globalStrategy: state.fallbackRuleStore.launchStrategy
@@ -557,6 +569,16 @@ struct SwitchingFeature {
         case .failed:
             return .waitingForCatalog
         }
+    }
+
+    private func matchingBrowserRule(state: State) -> BrowserRule? {
+        guard !state.browserRulesStore.rules.isEmpty,
+              let url = browserURLClient.currentURL()
+        else {
+            return nil
+        }
+
+        return BrowserRuleMatcher.firstMatch(in: state.browserRulesStore.rules, url: url)
     }
 
     private func retryFrontmostApplicationEffect(in state: inout State) -> Effect<Action> {

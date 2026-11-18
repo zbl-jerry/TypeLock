@@ -106,6 +106,7 @@ struct AppFeature {
                 fallbackRuleStore: fallbackRuleStore,
                 exclusionsStore: exclusionsStore,
                 indicatorPreferences: indicatorPreferences,
+                browserRulesStore: browserRulesStore,
                 currentFrontmostBundleId: currentFrontmostBundleId,
                 inputMethodCatalogStatus: inputMethodCatalogStatus,
                 inputMethods: inputMethods,

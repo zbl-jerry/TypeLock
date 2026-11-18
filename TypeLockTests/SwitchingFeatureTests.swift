@@ -66,6 +66,84 @@ final class SwitchingFeatureTests: XCTestCase {
     }
 
 
+
+    func testBrowserRuleOverridesAppActivationStrategy() async {
+        let app = AppInfo(
+            bundleId: "com.google.Chrome",
+            name: "Chrome",
+            path: "/Applications/Google Chrome.app"
+        )
+        let browserInputMethod = InputMethod(id: "ime.en", name: "English")
+        let appInputMethod = InputMethod(id: "ime.zh", name: "Chinese")
+        let timestamp = Date(timeIntervalSince1970: 10)
+        let recorder = SwitchRecorder()
+
+        var initialState = makeState()
+        initialState.inputMethods = [browserInputMethod, appInputMethod]
+        initialState.$appRulesStore.withLock {
+            $0.rules[app.bundleId] = AppRuleRecord(
+                bundleId: app.bundleId,
+                lastKnownPath: app.path,
+                lastKnownName: app.name,
+                strategy: .fixed(inputMethodId: appInputMethod.id),
+                createdAt: timestamp,
+                updatedAt: timestamp
+            )
+        }
+        initialState.$browserRulesStore.withLock {
+            $0.upsert(BrowserRule(
+                matchType: .domainSuffix,
+                pattern: "example.com",
+                inputMethodId: browserInputMethod.id
+            ))
+        }
+
+        let store = TestStore(initialState: initialState) {
+            SwitchingFeature()
+        }
+        store.dependencies.date = .constant(timestamp)
+        store.dependencies.browserURLClient.currentURL = {
+            URL(string: "https://mail.example.com/inbox")
+        }
+        store.dependencies.inputMethodClient.currentInputMethodId = { appInputMethod.id }
+        store.dependencies.inputMethodClient.switchToInputMethod = { inputMethodId in
+            await recorder.record(inputMethodId)
+        }
+
+        await store.send(.applicationActivated(app)) {
+            $0.currentFrontmostBundleId = app.bundleId
+            $0.nextSwitchAttemptID = 1
+            $0.pendingProgrammaticSwitch = .init(
+                appName: app.name,
+                bundleId: app.bundleId,
+                inputMethodId: browserInputMethod.id,
+                inputMethodName: browserInputMethod.name
+            )
+        }
+
+        await store.receive(.response(.programmaticSwitchFinished(
+            attemptID: 0,
+            outcome: .switched
+        ))) {
+            $0.pendingProgrammaticSwitch = nil
+            $0.lastSwitchAttempt = .init(
+                appName: app.name,
+                bundleId: app.bundleId,
+                inputMethodId: browserInputMethod.id,
+                inputMethodName: browserInputMethod.name,
+                outcome: .switched,
+                ruleSource: .app,
+                timestamp: timestamp
+            )
+            $0.$appSwitchStatisticsStore.withLock {
+                $0.counts[app.bundleId] = 1
+            }
+        }
+
+        let switchedInputMethods = await recorder.values
+        XCTAssertEqual(switchedInputMethods, [browserInputMethod.id])
+    }
+
     func testHotkeySwitchesToSelectedInputMethod() async {
         let app = AppInfo(bundleId: "com.test.editor", name: "Editor", path: "/Applications/Editor.app")
         let inputMethod = InputMethod(id: "ime.en", name: "English")
