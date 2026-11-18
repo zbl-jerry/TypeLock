@@ -19,17 +19,26 @@ enum TerminalProgramService {
         guard PermissionService.accessibilityStatus == .granted,
               let application = NSWorkspace.shared.frontmostApplication,
               let bundleIdentifier = application.bundleIdentifier,
-              terminalBundleIdentifiers.contains(bundleIdentifier),
-              let outerTTY = focusedTTY(bundleIdentifier: bundleIdentifier)
+              terminalBundleIdentifiers.contains(bundleIdentifier)
         else {
             return nil
         }
 
-        var tty = outerTTY
-        if let processGroupID = foregroundProcessGroup(tty: outerTTY),
+        var tty: String
+        if bundleIdentifier == "com.github.wez.wezterm" {
+            guard let paneTTY = wezTermActivePaneTTY() else { return nil }
+            tty = paneTTY
+        } else {
+            guard let outerTTY = focusedTTY(bundleIdentifier: bundleIdentifier) else {
+                return nil
+            }
+            tty = outerTTY
+        }
+
+        if let processGroupID = foregroundProcessGroup(tty: tty),
            let outerProgram = processName(processGroupID: processGroupID),
            TerminalRule.normalized(outerProgram) == "tmux",
-           let paneTTY = tmuxPaneTTY(clientTTY: outerTTY)
+           let paneTTY = tmuxPaneTTY(clientTTY: tty)
         {
             tty = paneTTY
         }
@@ -89,6 +98,33 @@ enum TerminalProgramService {
             .split(whereSeparator: \.isNewline)
             .map { String($0).trimmingCharacters(in: .whitespaces) }
             .first { !$0.isEmpty }
+    }
+
+    private static func wezTermActivePaneTTY() -> String? {
+        let candidates = [
+            "/Applications/WezTerm.app/Contents/MacOS/wezterm",
+            "/opt/homebrew/bin/wezterm",
+            "/usr/local/bin/wezterm",
+        ]
+        guard let wezterm = candidates.first(where: FileManager.default.isExecutableFile(atPath:)),
+              let output = runCommand(
+                  executable: wezterm,
+                  arguments: ["cli", "list", "--format", "json"]
+              ),
+              let data = output.data(using: .utf8),
+              let panes = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]]
+        else {
+            return nil
+        }
+
+        let active = panes.first { ($0["is_active"] as? Bool) == true }
+        let pane = active ?? panes.first
+        guard let tty = pane?["tty_name"] as? String,
+              tty.hasPrefix("/dev/")
+        else {
+            return nil
+        }
+        return tty
     }
 
     private static func tmuxPaneTTY(clientTTY: String) -> String? {
