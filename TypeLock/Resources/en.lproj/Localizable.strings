@@ -226,3 +226,9 @@
 "settings.browser.match.domain" = "Exact Domain";
 "settings.browser.match.domain_suffix" = "Domain Suffix";
 "settings.browser.match.url_regex" = "URL Regex";
+
+// Terminal rules
+"settings.terminal.add_rule" = "Add Rule";
+"settings.terminal.empty" = "No terminal rules";
+"settings.terminal.program" = "Program, e.g. nvim";
+"settings.terminal.invalid" = "Enter a program name";

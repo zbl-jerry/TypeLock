@@ -226,3 +226,9 @@
 "settings.browser.match.domain" = "精确域名";
 "settings.browser.match.domain_suffix" = "域名后缀";
 "settings.browser.match.url_regex" = "URL 正则";
+
+// 终端规则
+"settings.terminal.add_rule" = "添加规则";
+"settings.terminal.empty" = "暂无终端规则";
+"settings.terminal.program" = "程序名，例如 nvim";
+"settings.terminal.invalid" = "请输入程序名";

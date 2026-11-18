@@ -36,6 +36,8 @@ struct SettingsRootView: View {
                         HotkeysSettingsPane(store: store)
                     case .browser:
                         BrowserSettingsPane(store: store)
+                    case .terminal:
+                        TerminalSettingsPane(store: store)
                     case .exclusions:
                         ExclusionsSettingsPane(store: store)
                     case .troubleshooting:
@@ -277,7 +279,8 @@ private struct GeneralSettingsPane: View {
             exclusionsStore: store.exclusions,
             indicatorPreferences: store.indicator,
             hotkeyPreferences: store.hotkeys,
-            browserRulesStore: store.browserRules
+            browserRulesStore: store.browserRules,
+            terminalRulesStore: store.terminalRules
         )
     }
 
@@ -292,7 +295,8 @@ private struct GeneralSettingsPane: View {
             exclusionsStore: store.exclusions,
             indicatorPreferences: store.indicator,
             hotkeyPreferences: store.hotkeys,
-            browserRulesStore: store.browserRules
+            browserRulesStore: store.browserRules,
+            terminalRulesStore: store.terminalRules
         )
     }
 }
@@ -499,6 +503,111 @@ private struct ActivationStrategyMenuContent: View {
             Text(title)
         }
         .toggleStyle(.checkbox)
+    }
+}
+
+private struct TerminalSettingsPane: View {
+    let store: StoreOf<AppFeature>
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("settings.section.terminal")
+                    .font(.headline)
+                Spacer()
+                Button("settings.terminal.add_rule") {
+                    addRule()
+                }
+                .disabled(store.inputMethods.isEmpty)
+            }
+            .padding()
+
+            if store.terminalRules.rules.isEmpty {
+                Text("settings.terminal.empty")
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
+                    .padding(.bottom)
+            } else {
+                ForEach(store.terminalRules.rules) { rule in
+                    HStack(spacing: 10) {
+                        TextField("settings.terminal.program", text: Binding(
+                            get: { rule.program },
+                            set: { value in
+                                update(rule) {
+                                    $0.program = value
+                                }
+                            }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+
+                        Picker("settings.browser.input_method", selection: Binding(
+                            get: { rule.inputMethodId },
+                            set: { value in
+                                update(rule) {
+                                    $0.inputMethodId = value
+                                }
+                            }
+                        )) {
+                            ForEach(store.inputMethods) { inputMethod in
+                                Text(inputMethod.name).tag(inputMethod.id)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(width: 150)
+
+                        Toggle("settings.browser.enabled", isOn: Binding(
+                            get: { rule.enabled },
+                            set: { value in
+                                update(rule) {
+                                    $0.enabled = value
+                                }
+                            }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(.checkbox)
+
+                        if rule.program.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            Image(systemName: "exclamationmark.triangle")
+                                .foregroundStyle(.orange)
+                                .help("settings.terminal.invalid")
+                        }
+
+                        Button(role: .destructive) {
+                            var rules = store.terminalRules
+                            rules.remove(id: rule.id)
+                            store.send(.view(.setTerminalRules(rules)))
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                        .buttonStyle(.borderless)
+                        .help("settings.browser.delete")
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .overlay(alignment: .bottom) {
+                        Divider()
+                    }
+                }
+            }
+        }
+        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func addRule() {
+        guard let inputMethod = store.inputMethods.first else { return }
+        var rules = store.terminalRules
+        rules.upsert(TerminalRule(program: "", inputMethodId: inputMethod.id))
+        store.send(.view(.setTerminalRules(rules)))
+    }
+
+    private func update(_ rule: TerminalRule, change: (inout TerminalRule) -> Void) {
+        var updated = rule
+        change(&updated)
+        updated.updatedAt = Date()
+        var rules = store.terminalRules
+        rules.upsert(updated)
+        store.send(.view(.setTerminalRules(rules)))
     }
 }
 

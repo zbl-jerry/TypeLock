@@ -67,6 +67,78 @@ final class SwitchingFeatureTests: XCTestCase {
 
 
 
+
+    func testTerminalRuleOverridesAppActivationStrategy() async {
+        let app = AppInfo(
+            bundleId: "com.apple.Terminal",
+            name: "Terminal",
+            path: "/System/Applications/Utilities/Terminal.app"
+        )
+        let terminalInputMethod = InputMethod(id: "ime.en", name: "English")
+        let appInputMethod = InputMethod(id: "ime.zh", name: "Chinese")
+        let timestamp = Date(timeIntervalSince1970: 10)
+        let recorder = SwitchRecorder()
+
+        var initialState = makeState()
+        initialState.inputMethods = [terminalInputMethod, appInputMethod]
+        initialState.$appRulesStore.withLock {
+            $0.rules[app.bundleId] = AppRuleRecord(
+                bundleId: app.bundleId,
+                lastKnownPath: app.path,
+                lastKnownName: app.name,
+                strategy: .fixed(inputMethodId: appInputMethod.id),
+                createdAt: timestamp,
+                updatedAt: timestamp
+            )
+        }
+        initialState.$terminalRulesStore.withLock {
+            $0.upsert(TerminalRule(program: "nvim", inputMethodId: terminalInputMethod.id))
+        }
+
+        let store = TestStore(initialState: initialState) {
+            SwitchingFeature()
+        }
+        store.dependencies.date = .constant(timestamp)
+        store.dependencies.terminalProgramClient.currentProgram = { "nvim" }
+        store.dependencies.inputMethodClient.currentInputMethodId = { appInputMethod.id }
+        store.dependencies.inputMethodClient.switchToInputMethod = { inputMethodId in
+            await recorder.record(inputMethodId)
+        }
+
+        await store.send(.applicationActivated(app)) {
+            $0.currentFrontmostBundleId = app.bundleId
+            $0.nextSwitchAttemptID = 1
+            $0.pendingProgrammaticSwitch = .init(
+                appName: app.name,
+                bundleId: app.bundleId,
+                inputMethodId: terminalInputMethod.id,
+                inputMethodName: terminalInputMethod.name
+            )
+        }
+
+        await store.receive(.response(.programmaticSwitchFinished(
+            attemptID: 0,
+            outcome: .switched
+        ))) {
+            $0.pendingProgrammaticSwitch = nil
+            $0.lastSwitchAttempt = .init(
+                appName: app.name,
+                bundleId: app.bundleId,
+                inputMethodId: terminalInputMethod.id,
+                inputMethodName: terminalInputMethod.name,
+                outcome: .switched,
+                ruleSource: .app,
+                timestamp: timestamp
+            )
+            $0.$appSwitchStatisticsStore.withLock {
+                $0.counts[app.bundleId] = 1
+            }
+        }
+
+        let switchedInputMethods = await recorder.values
+        XCTAssertEqual(switchedInputMethods, [terminalInputMethod.id])
+    }
+
     func testBrowserRuleOverridesAppActivationStrategy() async {
         let app = AppInfo(
             bundleId: "com.google.Chrome",

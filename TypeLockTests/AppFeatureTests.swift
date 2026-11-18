@@ -309,6 +309,7 @@ final class AppFeatureTests: XCTestCase {
             $0.$indicatorPreferences.withLock { $0 = payload.indicatorPreferences }
             $0.$hotkeyPreferences.withLock { $0 = payload.hotkeyPreferences }
             $0.$browserRulesStore.withLock { $0 = payload.browserRulesStore }
+            $0.$terminalRulesStore.withLock { $0 = payload.terminalRulesStore }
         }
 
         XCTAssertEqual(store.state.appRules, payload.appRulesStore.rules)

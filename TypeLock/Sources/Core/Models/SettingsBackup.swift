@@ -33,6 +33,7 @@ struct SettingsImportPayload: Equatable, Sendable {
     let indicatorPreferences: IndicatorPreferences
     let hotkeyPreferences: HotkeyPreferences
     let browserRulesStore: BrowserRulesStore
+    let terminalRulesStore: TerminalRulesStore
 
     init(
         appRulesStore: AppRulesStore,
@@ -41,7 +42,8 @@ struct SettingsImportPayload: Equatable, Sendable {
         exclusionsStore: ExclusionsStore = ExclusionsStore(),
         indicatorPreferences: IndicatorPreferences = IndicatorPreferences(),
         hotkeyPreferences: HotkeyPreferences = HotkeyPreferences(),
-        browserRulesStore: BrowserRulesStore = BrowserRulesStore()
+        browserRulesStore: BrowserRulesStore = BrowserRulesStore(),
+        terminalRulesStore: TerminalRulesStore = TerminalRulesStore()
     ) {
         self.appRulesStore = appRulesStore
         self.fallbackRuleStore = fallbackRuleStore
@@ -50,6 +52,7 @@ struct SettingsImportPayload: Equatable, Sendable {
         self.indicatorPreferences = indicatorPreferences
         self.hotkeyPreferences = hotkeyPreferences
         self.browserRulesStore = browserRulesStore
+        self.terminalRulesStore = terminalRulesStore
     }
 }
 
@@ -67,6 +70,7 @@ struct SettingsBackup: Codable, Equatable, Sendable {
     let indicatorPreferences: IndicatorPreferences?
     let hotkeys: HotkeyPreferences?
     let browserRules: BrowserRulesStore?
+    let terminalRules: TerminalRulesStore?
 
     init(
         appRulesStore: AppRulesStore,
@@ -79,7 +83,8 @@ struct SettingsBackup: Codable, Equatable, Sendable {
         exclusionsStore: ExclusionsStore? = nil,
         indicatorPreferences: IndicatorPreferences? = nil,
         hotkeyPreferences: HotkeyPreferences? = nil,
-        browserRulesStore: BrowserRulesStore? = nil
+        browserRulesStore: BrowserRulesStore? = nil,
+        terminalRulesStore: TerminalRulesStore? = nil
     ) {
         schemaVersion = Self.currentSchemaVersion
         self.exportedAt = exportedAt
@@ -92,6 +97,7 @@ struct SettingsBackup: Codable, Equatable, Sendable {
         self.indicatorPreferences = indicatorPreferences
         hotkeys = hotkeyPreferences
         browserRules = browserRulesStore
+        terminalRules = terminalRulesStore
     }
 
     func validate() throws {
@@ -138,6 +144,7 @@ struct SettingsBackup: Codable, Equatable, Sendable {
         let importedIndicator = indicatorPreferences ?? current.indicatorPreferences
         let importedHotkeys = hotkeys ?? current.hotkeyPreferences
         let importedBrowserRules = browserRules ?? current.browserRulesStore
+        let importedTerminalRules = terminalRules ?? current.terminalRulesStore
 
         switch mode {
         case .replace:
@@ -153,7 +160,8 @@ struct SettingsBackup: Codable, Equatable, Sendable {
                 exclusionsStore: importedExclusions,
                 indicatorPreferences: importedIndicator,
                 hotkeyPreferences: importedHotkeys,
-                browserRulesStore: importedBrowserRules
+                browserRulesStore: importedBrowserRules,
+                terminalRulesStore: importedTerminalRules
             )
         case .merge:
             var mergedRules = current.appRulesStore.rules
@@ -175,6 +183,11 @@ struct SettingsBackup: Codable, Equatable, Sendable {
                 mergedBrowserRules.upsert(rule)
             }
 
+            var mergedTerminalRules = current.terminalRulesStore
+            for rule in importedTerminalRules.rules {
+                mergedTerminalRules.upsert(rule)
+            }
+
             return SettingsImportPayload(
                 appRulesStore: AppRulesStore(
                     v: MigrationVersion.current,
@@ -187,7 +200,8 @@ struct SettingsBackup: Codable, Equatable, Sendable {
                 exclusionsStore: mergedExclusions,
                 indicatorPreferences: importedIndicator,
                 hotkeyPreferences: importedHotkeys,
-                browserRulesStore: mergedBrowserRules
+                browserRulesStore: mergedBrowserRules,
+                terminalRulesStore: mergedTerminalRules
             )
         }
     }

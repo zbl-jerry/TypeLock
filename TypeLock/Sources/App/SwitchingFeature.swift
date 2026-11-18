@@ -8,6 +8,7 @@ struct SwitchingFeature {
     @Dependency(\.browserURLClient) var browserURLClient
     @Dependency(\.date.now) var now
     @Dependency(\.indicatorClient) var indicatorClient
+    @Dependency(\.terminalProgramClient) var terminalProgramClient
     @Dependency(\.inputMethodClient) var inputMethodClient
     @Dependency(\.workspaceClient) var workspaceClient
 
@@ -74,6 +75,7 @@ struct SwitchingFeature {
         @Shared var exclusionsStore: ExclusionsStore
         @Shared var indicatorPreferences: IndicatorPreferences
         @Shared var browserRulesStore: BrowserRulesStore
+        @Shared var terminalRulesStore: TerminalRulesStore
         var currentFrontmostBundleId: String?
         var inputMethodCatalogStatus: InputMethodCatalogStatus = .loading
         var inputMethods: [InputMethod] = []
@@ -103,6 +105,10 @@ struct SwitchingFeature {
                 wrappedValue: BrowserRulesStore(),
                 .fileStorage(.browserRulesURL)
             ),
+            terminalRulesStore: Shared<TerminalRulesStore> = Shared(
+                wrappedValue: TerminalRulesStore(),
+                .fileStorage(.terminalRulesURL)
+            ),
             currentFrontmostBundleId: String? = nil,
             inputMethodCatalogStatus: InputMethodCatalogStatus = .loading,
             inputMethods: [InputMethod] = [],
@@ -114,6 +120,7 @@ struct SwitchingFeature {
             self._exclusionsStore = exclusionsStore
             self._indicatorPreferences = indicatorPreferences
             self._browserRulesStore = browserRulesStore
+            self._terminalRulesStore = terminalRulesStore
             self.currentFrontmostBundleId = currentFrontmostBundleId
             self.inputMethodCatalogStatus = inputMethodCatalogStatus
             self.inputMethods = inputMethods
@@ -531,6 +538,11 @@ struct SwitchingFeature {
                 strategy: .fixed(inputMethodId: browserRule.inputMethodId),
                 source: .app
             )
+        } else if let terminalRule = matchingTerminalRule(state: state) {
+            resolution = SwitchResolver.Resolution(
+                strategy: .fixed(inputMethodId: terminalRule.inputMethodId),
+                source: .app
+            )
         } else if isLaunch {
             resolution = SwitchResolver.resolveLaunch(
                 appStrategy: state.appRulesStore.rules[bundleId]?.launchStrategy ?? .inherit,
@@ -579,6 +591,16 @@ struct SwitchingFeature {
         }
 
         return BrowserRuleMatcher.firstMatch(in: state.browserRulesStore.rules, url: url)
+    }
+
+    private func matchingTerminalRule(state: State) -> TerminalRule? {
+        guard !state.terminalRulesStore.rules.isEmpty,
+              let program = terminalProgramClient.currentProgram()
+        else {
+            return nil
+        }
+
+        return state.terminalRulesStore.firstMatch(program: program)
     }
 
     private func retryFrontmostApplicationEffect(in state: inout State) -> Effect<Action> {

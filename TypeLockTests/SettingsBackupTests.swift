@@ -58,6 +58,9 @@ final class SettingsBackupTests: XCTestCase {
                     pattern: "example.com",
                     inputMethodId: "ime.en"
                 ),
+            ]),
+            terminalRulesStore: TerminalRulesStore(rules: [
+                TerminalRule(program: "nvim", inputMethodId: "ime.en"),
             ])
         )
     }
@@ -75,6 +78,7 @@ final class SettingsBackupTests: XCTestCase {
         XCTAssertEqual(decoded.indicatorPreferences?.style, .iconOnly)
         XCTAssertEqual(decoded.hotkeys?.binding(for: "ime.en")?.keyCode, 49)
         XCTAssertEqual(decoded.browserRules?.rules.first?.pattern, "example.com")
+        XCTAssertEqual(decoded.terminalRules?.rules.first?.program, "nvim")
     }
 
     func testStatisticsAreOptional() throws {

@@ -226,3 +226,9 @@
 "settings.browser.match.domain" = "精確網域";
 "settings.browser.match.domain_suffix" = "網域後綴";
 "settings.browser.match.url_regex" = "URL 正則";
+
+// 終端機規則
+"settings.terminal.add_rule" = "新增規則";
+"settings.terminal.empty" = "尚無終端機規則";
+"settings.terminal.program" = "程式名稱，例如 nvim";
+"settings.terminal.invalid" = "請輸入程式名稱";

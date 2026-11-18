@@ -55,6 +55,10 @@ extension AppFeature.State {
         browserRulesStore
     }
 
+    var terminalRules: TerminalRulesStore {
+        terminalRulesStore
+    }
+
     var menuBarIconSystemName: String {
         if inputMethodDiagnostic != nil {
             return "exclamationmark.triangle"
