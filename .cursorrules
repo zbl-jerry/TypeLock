@@ -1,110 +1,57 @@
-您是一位专注于 SwiftUI macOS 开发的输入法自动切换工具。请遵循以下准则提供协助：
+你是 TypeLock 项目的 macOS 开发助手。TypeLock 是一个原生 macOS 输入法管理器，使用 SwiftUI、The Composable Architecture（TCA）和 Tuist。
 
-项目依赖管理：
-- 使用 Tuist 管理项目结构和依赖
-- 支持动态配置和环境变量读取
-- 遵循 Tuist 的项目组织方式
-- 使用 Environment 类型处理环境变量
+## 工具链与平台
 
-系统兼容性要求：
-- 最低支持 macOS 13 Ventura
-- SwiftUI 要求 macOS 13 或更高版本
-- 优先使用 macOS 13+ 新特性优化性能
-- 确保项目的 Deployment Target 设置正确
+- 最低支持 macOS 14.0。
+- 开发和 CI 固定 Xcode 26.3+；Swift 语言模式为 5.9。
+- 使用 Tuist 生成工程，不要手改 `.xcodeproj`。
+- 依赖固定：TCA 1.26.0、swift-dependencies 1.12.0、swift-syntax 602.0.0、Sharing 2.9.1、Sparkle 2.9.4。
+- 不要引入未使用或已淘汰的第三方库；优先使用系统框架和现有依赖。
+- SwiftFormat 版本由 `.swiftformat-version` 固定；提交前运行 `just format` 或 `just lint`。
 
-设计规范：
-- 遵循 Apple Human Interface Guidelines
-- 保持界面整洁和简约
-- 确保视觉层次分明
-- 重视细节完整性
-- 优先使用新的设计规范和组件
+## 架构
 
-UI 设计准则：
-- 布局规范：
-  * 合理使用留白
-  * 保持内容和控件并排放置
-  * 确保各元素对齐
-  * 适配不同屏幕尺寸
-  * 适当使用 Emoji 进行界面修饰和强调
-- 视觉设计：
-  * 使用系统标准颜色
-  * 支持浅色/深色模式
-  * 确保文字和背景对比度
-  * 使用系统字体
-- 交互设计：
-  * 实现标准的交互方式
-  * 提供清晰的反馈
-  * 保持导航的一致性
-  * 遵循系统常见的交互模式
+- 使用 `@Reducer` 拆分 AppFeature、SwitchingFeature 等 feature。
+- 依赖通过 `DependencyKey` 注入，不要在 reducer 中直接访问单例；UI 专用服务除外。
+- 共享状态使用 `@Shared` 和 JSON 文件存储，写入必须保持原子性。
+- 新增切换场景时统一走 `SwitchResolver`，不要在多个 reducer 中复制优先级逻辑。
+- 数据模型变更必须递增 `MigrationVersion`，并为旧数据提供默认解码。
+- 新增持久化文件时同步备份、导入导出和测试。
 
-第三方库使用规范：
-- Defaults 使用规范：
-  * 使用 Defaults 管理所有 UserDefaults 存储
-  * 统一在扩展中声明所有 Keys
-  * 确保 Key 名称符合 ASCII 且不以 @ 开头
-  * 为每个 Key 提供默认值
-- SwiftUIX 优先级：
-  * 优先使用 SwiftUIX 提供的组件和扩展
-  * 避免重复实现已有功能
-  * 使用其提供的性能优化特性
-  * 遵循其推荐的最佳实践
-- SwifterSwift 使用：
-  * 优先使用其提供的扩展方法
-  * 利用其内置的语法糖优化代码
-  * 使用其性能优化的实现方案
+## 行为约束
 
-必要的第三方依赖：
-- Defaults: https://github.com/sindresorhus/Defaults
-- SwiftUIX: https://github.com/SwiftUIX/SwiftUIX
-- SwifterSwift: https://github.com/SwifterSwift/SwifterSwift
+- 切换优先级：排除 → 浏览器规则 → 终端规则 → 应用启动/激活规则 → 全局规则 → 不切换。
+- 浏览器只做 URL/域名匹配，不做地址栏聚焦规则。
+- 终端支持 Terminal、iTerm2、tmux、WezTerm；其他终端回退 App 规则。
+- 指示器支持光标、鼠标、屏幕位置，9 向对齐、间距、Caps Lock、常驻和每输入法外观。
+- 快捷键使用 Carbon `RegisterEventHotKey`，并检测冲突。
+- CJKV 修复和 Cursor Lag Fix 必须可关闭、可降级；私有 API 不进入默认路径。
+- 不要实现每 App 强制英文标点、每 App 功能键或 Spotlight/Alfred/Raycast 浮窗仲裁。
 
-SwiftLint 代码规范：
-- 代码行长度限制：单行不超过 110 字符
-- 函数参数数量：不超过 5 个参数
-- 类型命名规范：
-  * 最小长度 4 个字符
-  * 最大长度 40 字符
-- 变量命名规范：
-  * 使用驼峰命名法
-  * 保持命名的语义化
-  * 避免无意义的缩写
-- 代码格式规范：
-  * 冒号规则：变量定义时紧跟变量名，后面加一个空格
-  * 逗号规则：前不离身，后加空格
-  * 控制语句：if、for、while 等条件不使用括号包裹
-  * 条件返回：条件语句返回值需要换行
-  * 空格使用：运算符前后必须有空格
-  * 括号使用：左括号后和右括号前不能有空格
+## 权限
 
-文档要求：
-- 为公开 API 添加文档注释
-- 标注第三方库使用说明
-- 记录兼容性考虑
-- 说明性能优化点
-- 使用 /// 格式的文档注释
-- 注释需要使用完整的句子
-- 中文注释需要使用空格分隔
+- Accessibility：浏览器 URL、文本光标、终端 pane、常驻指示器。
+- Automation / Apple Events：向 Terminal/iTerm2 查询 tty。
+- 登录项：登录时启动。
+- 不申请屏幕录制；权限被拒绝或撤销时必须回退并给出可读状态。
 
-错误处理：
-- 使用 Result 类型进行错误处理
-- 提供清晰的错误提示信息
-- 避免强制解包
-- 合理使用 try? 和 try!
+## UI 与本地化
 
-性能优化：
-- 优先使用系统原生组件
-- 避免重复造轮子
-- 利用 SwiftUIX 的性能优化特性
-- 合理使用 SwifterSwift 的扩展功能
+- 菜单栏保留快速操作；完整配置在设置窗口。
+- 设置窗口使用 9 个分组：通用、自定义 App、输入法提示、快捷键、浏览器与域名、终端、排除、故障排查、关于。
+- 所有用户可见文案必须进入 `Localizable.strings`；当前语言：Base、zh-Hans、zh-Hant、en、ja、ko、fa。
+- 保持四语言 key/placeholder 一致，新增语言也必须同步。
+- 支持浅色/深色、VoiceOver 标签和键盘导航。
 
-测试规范：
-- 单元测试覆盖核心功能
-- 使用 XCTest 框架
-- 测试方法名称清晰表达测试目的
-- 每个测试用例只测试一个功能点
+## 测试
 
-软件执行刘
-1. 选择 Xcode 工程文件
-2. 点击从 Xcode 导出 Xcloc 文件临时目录
-3. 读取 Xcloc 文件并展示在侧边栏
-4. 侧边选择后显示全部的国际化字符串在图标
+- 使用 XCTest；模型、迁移、解析优先级、导入导出、快捷键冲突、指示器布局必须有单元测试。
+- 测试依赖使用 testValue，不要访问真实文件、网络、输入法或权限。
+- 本地运行：`just test`；完整检查：`just check`。
+- 修改 reducer 后同步更新 TestStore 期望和日期依赖。
+
+## 代码风格
+
+- 遵循现有命名和文件组织：`Type+Feature.swift`。
+- 不留下 TODO、占位实现、mock 数据或未完成功能。
+- 不写营销式文案；文档和注释使用准确、可验证的描述。

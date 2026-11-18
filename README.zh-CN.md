@@ -8,7 +8,7 @@
 
 <h1 align="center">TypeLock</h1>
 
-<p align="center">TypeLock 是一款按 App 自动切换输入法的原生 macOS 菜单栏工具。为每个 App 选择输入法策略，设置未配置 App 的默认规则，并在前台 App 切换时自动切到对应输入法。</p>
+<p align="center">TypeLock 是一款原生 macOS 输入法管理器。它支持按 App 的启动/激活规则、浏览器域名规则和终端程序规则切换输入法，并提供屏幕提示、每输入法快捷键、排除列表和配置备份。</p>
 
 <p align="center">
   <a href="https://swift.org"><img alt="Swift" src="https://img.shields.io/badge/Swift-5.9-orange.svg"></a>
@@ -20,181 +20,177 @@
 
 <p align="center">🇨🇳 <strong>简体中文</strong> · 🇺🇸 <a href="README.md">English</a></p>
 
-> **Fork 说明：** TypeLock 是 [TypeSwitch](https://github.com/ygsgdbd/TypeSwitch) 的独立 fork，由 [zbl-jerry](https://github.com/zbl-jerry) 维护。`main` 分支用于追踪上游；`dev` 分支用于 TypeLock 的开发、构建和发布。
+## ✨ 功能
 
-## ✨ 功能亮点
+- **每 App 双时机规则。** App 启动后的首次前台和从后台切回前台可以使用不同输入法；规则可继承全局默认、禁止切换、记住上次输入法或指定固定输入法。
+- **浏览器域名规则。** 支持精确域名、域名后缀和完整 URL 正则；当前台浏览器上报匹配 URL 时应用。
+- **终端程序规则。** 按终端聚焦 pane 中的前台程序切换，例如 `nvim`、`ssh`、`claude`。
+- **输入法指示器。** 可在文本光标、鼠标或屏幕边缘显示当前输入法；支持时长、9 向对齐、间距、尺寸、样式、Caps Lock、常驻显示，以及每输入法的短标签和颜色。
+- **全局快捷键。** 为任意输入法绑定快捷键，支持冲突检测和录制。
+- **排除列表。** 自动切换和输入法提示分别维护独立排除列表。
+- **可靠性工具。** 通过焦点落定修复输入法切换不同步；可选关闭 macOS 14 实验性文本光标，缓解输入/光标卡顿。
+- **配置备份。** 以 JSON 导出和导入全部规则与偏好，支持合并或替换。
+- **本地优先。** 规则、统计和诊断保存在本机；更新使用 Sparkle 和签名 appcast。
 
-- **按 App 自动切换。** TypeLock 会监听当前前台 App，在你切换 App 时自动应用已保存的输入法规则，已忽略的 App 除外。
-- **选择适合自己的切换方式。** 可让 App 继承默认规则、记住上次切换、指定输入法，或忽略不希望 TypeLock 管理的 App。
-- **随时配置遇到的 App。** 可直接设置当前 App，从按配置状态分组的运行中 App 里选择，或在菜单栏中管理全部已保存规则。
-- **保持规则与统计整洁。** 查找不存在 App 的规则、移除失效设置、查看成功切换次数，并按需清零统计。
-- **融入日常工作流程。** 支持登录时打开、通过 Sparkle 静默检查更新、从“帮助与关于”访问项目与支持入口，以及使用 `Command + Q` 退出。
+## 🔀 切换优先级
 
-## 🪶 原生与轻量
+每次前台事件按以下顺序解析：
 
-- **真正原生。** TypeLock 的 App 业务代码使用 Swift 编写，并采用 SwiftUI 和 The Composable Architecture（TCA）架构。它基于 `MenuBarExtra` 与 `LSUIElement` 构建，不包含 Electron 运行时，也没有嵌入 WebView。
-- **专注且轻量。** TypeLock 作为菜单栏工具运行，无需附带浏览器引擎或服务端组件。App 规则、默认规则和切换统计都保存在你的 Mac 上。
-- **自然融入 macOS。** 界面会自动适配浅色与暗色模式。在 macOS 26 上，原生 SwiftUI 控件会在适用位置呈现系统提供的 Liquid Glass 外观；macOS 14 与 macOS 15 则保持各自的原生系统样式。TypeLock 不使用自定义视觉效果模拟 Liquid Glass。
-- **同时支持新旧 Mac。** Release workflow 使用 Xcode 26.3，并验证每个发布版本都是同时支持 Apple Silicon 与 Intel Mac 的 Universal Binary。
+1. 当前 App 的应用切换排除。
+2. 匹配当前浏览器 URL 的浏览器规则。
+3. 匹配当前终端前台程序的终端规则。
+4. 每 App 的启动规则（启动后首次前台）或激活规则（从后台返回）。
+5. 全局启动或激活策略。
+6. 不自动切换。
 
-## 💻 系统要求
+浏览器规则使用当前浏览器上报的页面 URL；TypeLock 不提供单独的“地址栏聚焦”规则。
 
-- macOS 14.0 或更高版本
-- 已启用的 macOS 键盘布局或输入法
-- macOS 对应用激活监听、系统输入法切换和可选登录项所需的权限
+## 🖥️ 设置
 
-## 📦 安装方法
+设置窗口包含：
 
-TypeLock 以 Universal Binary `.zip` 的形式从 [GitHub Releases](https://github.com/zbl-jerry/TypeLock/releases) 发布，所有版本都由 `dev` 分支构建和发布。本 fork 不提供 Homebrew cask，发布版本未签名、未公证。
+- **通用** — 登录时启动、启动时输入法、全局默认规则、数据版本、配置备份。
+- **自定义 App** — 每个 App 的启动和激活规则。
+- **输入法提示** — 开关、仅变化时提示、光标优先、时长、位置、光标锚定、对齐、间距、样式、尺寸、Caps Lock、常驻显示、每输入法外观。
+- **输入法快捷键** — 每个输入法的全局快捷键。
+- **浏览器与域名** — 精确域名、后缀和 URL 正则规则。
+- **终端规则** — 程序名到输入法的规则。
+- **应用排除** — 切换排除和提示排除两栏。
+- **故障排查** — 权限状态、CJKV 焦点修复、光标卡顿修复。
+- **关于** — 版本、项目链接、问题反馈、Beta 更新。
 
-### 手动安装
+## 🌐 浏览器支持
 
-1. 从 [Releases](https://github.com/zbl-jerry/TypeLock/releases) 下载最新构建。
-2. 将 `TypeLock.app` 拖入“应用程序”文件夹。
-3. 在“应用程序”中按住 Control 点击或右键点击 `TypeLock.app`，选择“打开”，然后确认打开。
-4. 如果 macOS 仍然阻止运行，请打开“系统设置”→“隐私与安全性”，找到 TypeLock 的安全提示并选择“仍要打开”。
-5. 授予 macOS 请求的系统权限。
-6. TypeLock 会静默检查 GitHub Releases；发现新版本后，菜单会显示版本号，点击后才会打开更新窗口。
+TypeLock 会从以下浏览器读取当前 URL：
 
-## 🧭 使用说明
+- Safari、Safari Technology Preview
+- Chrome、Chromium、Thorium
+- Edge
+- Firefox、Firefox Developer Edition、Firefox Nightly
+- Brave、Brave Beta、Brave Nightly
+- Arc、Vivaldi、Opera、Zen、Dia、Helium、Comet、Aside、Whale
 
-1. 启动 TypeLock，键盘图标会出现在菜单栏中。
-2. 打开菜单，用“当前应用”配置当前前台 App。
-3. 用“运行中 · 未配置”为还没有规则的运行中 App 设置规则。
-4. 用“运行中 · 已配置”和“全部已配置 App”查看并修改已有 App 规则。
-5. 为每个 App 选择“默认”以继承兜底规则，或选择“记住上次切换”及指定输入法。
-6. 选择“忽略此 App”可停止自动切换并将其从普通列表隐藏；可在“已忽略 App”中单项恢复或恢复全部，并还原忽略前的规则。
-7. 用“未配置 App 的默认规则”设置没有单独规则的 App 的默认行为。
-8. 按需查看“找不到的 App”和“切换统计”，清理缺失规则或查看成功切换次数。
+如果浏览器未通过辅助功能暴露 URL，TypeLock 回退到 App 规则。
 
-## 🔒 隐私与权限
+## ⌨️ 终端支持
 
-- App 规则、未配置 App 的默认规则和切换统计都存储在本地。
-- 本仓库中没有服务端组件。
-- TypeLock 会在启动时及运行期间定时访问 GitHub appcast 检查更新。后台检查只更新菜单状态，不会自动弹窗、下载或安装；点击“检查更新…”或“新版本 … 可用…”后才会打开 Sparkle 更新窗口。
-- 输入法切换使用 macOS 系统输入源。
-- “登录时打开”使用 macOS 登录项；必要时会回退到 LaunchAgent。
+- **Terminal**、**iTerm2** — 通过 AppleScript 获取聚焦 tty。
+- **tmux** — 将终端 client tty 映射到当前 pane tty。
+- **WezTerm** — 通过 `wezterm cli list --format json` 读取当前 pane。
+- **Ghostty**、**Alacritty**、**zellij** 尚未适配，回退到终端 App 规则。
+
+## 🔐 权限
+
+| 权限 | 用途 |
+|---|---|
+| 辅助功能 | 读取浏览器 URL、文本光标位置、终端 pane 焦点和常驻指示器位置 |
+| 自动化 / Apple Events | 向 Terminal 或 iTerm2 查询聚焦 tty |
+| 登录项 | 登录时启动 |
+
+TypeLock 不请求屏幕录制权限，也不会上传规则或使用数据。
+
+可选的 Cursor Helper 是独立可执行文件，可能需要单独授予辅助功能权限；不可用时回退到直接读取 Accessibility，再回退到鼠标/屏幕位置。
+
+## 💾 本地数据
+
+配置保存在：
+
+```text
+~/Library/Application Support/io.github.zbl-jerry.TypeLock/
+```
+
+包括 App 规则、fallback 规则、浏览器规则、终端规则、排除列表、指示器偏好、快捷键偏好、可靠性偏好和切换统计。备份默认包含规则与偏好，不包含统计。
+
+## 📦 安装
+
+TypeLock 以 Universal Binary `.zip` 从 [GitHub Releases](https://github.com/zbl-jerry/TypeLock/releases) 发布；没有 Homebrew cask。当前构建未签名、未公证。
+
+1. 从 Releases 下载最新构建。
+2. 将 `TypeLock.app` 移入“应用程序”。
+3. 按住 Control 点击 App，选择“打开”并确认。
+4. 如果 macOS 仍然阻止，请前往“系统设置 → 隐私与安全性 → 仍要打开”。
+5. 授予上述权限。
+
+## 🧭 使用
+
+1. 启动 TypeLock，菜单栏出现图标。
+2. 菜单中可配置当前 App、运行中 App、已配置 App、找不到的 App、已忽略 App、切换统计和全局设置。
+3. 打开 **设置…** 使用完整规则与指示器编辑器。
+4. 配置每 App 的启动/激活规则，再按需添加浏览器、终端和排除规则。
+5. 大量修改前可先导出配置，或用于迁移到另一台 Mac。
+
+## 🚧 已知限制
+
+- 不提供每 App“强制英文标点”。
+- 不提供每 App 功能键模式。
+- 未专门处理 Spotlight、Alfred、Raycast 浮窗仲裁。
+- 未适配 Ghostty、Alacritty、zellij 的终端前台程序。
+- 浏览器只做 URL/域名匹配，不做独立地址栏聚焦规则。
+- Cursor Helper 为 best-effort，需要自身辅助功能权限。
+- 日文、韩文、波斯文已翻译常用界面，部分技术/错误文案仍回退英文。
+- 发布构建未签名、未公证。
 
 ## 🧰 技术栈
 
-本项目使用：
+- [The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture) `1.26.0`
+- [Sharing](https://github.com/pointfreeco/swift-sharing) `2.9.1`
+- [Sparkle](https://github.com/sparkle-project/Sparkle) `2.9.4`
+- CasePaths、Dependencies `1.12.0`、PerceptionCore
+- [Tuist](https://github.com/tuist/tuist)：项目生成
 
-- [The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture) `1.26.0`：应用架构和状态管理
-- [Sharing](https://github.com/pointfreeco/swift-sharing) `2.9.1`：基于文件的共享状态持久化
-- [Sparkle](https://github.com/sparkle-project/Sparkle) `2.9.4`：静默自动检查、手动更新和 appcast 支持
-- Point-Free 支持库：CasePaths、Dependencies、PerceptionCore
-- [Tuist](https://github.com/tuist/tuist)：项目生成和构建配置
-
-## 🧪 开发相关
+## 🧪 开发
 
 ### 环境要求
 
 - Xcode 26.3+
-- Swift 5.9+
+- Swift 5.9 语言模式
 - macOS 14.0+
 - [just](https://github.com/casey/just)
 - [Tuist](https://github.com/tuist/tuist)
-- [SwiftFormat](https://github.com/nicklockwood/SwiftFormat)（版本由 `.swiftformat-version` 固定）
-- [ImageMagick](https://imagemagick.org/)
-- RTK（`rtk`，截图生成脚本需要）
+- [SwiftFormat](https://github.com/nicklockwood/SwiftFormat) `0.62.1`（由 `.swiftformat-version` 固定）
 
 ### 工具链固定
 
-- CI 固定使用 **Xcode 26.3**；`just test` 会拒绝低于 26.3 的 Xcode。
+- CI 固定 **Xcode 26.3**；`just test` 会拒绝更低版本。
 - `swift-dependencies` 固定为 **1.12.0**，传递依赖 `swift-syntax` 固定为 **602.0.0**，因为更新版本要求 Swift 6.3。
 - 在 CI 工具链升级前不要提升这些版本。
 
-### 构建步骤
-
-安装所需开发工具：
-
-```bash
-brew install just swiftformat
-brew tap tuist/tuist
-brew install --formula tuist
-```
-
-生成工程前先选择 Xcode 26.3+：
+### 构建与测试
 
 ```bash
 sudo xcode-select -s /Applications/Xcode-26.3.0.app
+tuist generate --no-open
+just test
 ```
 
-克隆仓库并生成 Xcode 项目：
-
-```bash
-git clone https://github.com/zbl-jerry/TypeLock.git
-cd TypeLock
-git checkout dev
-tuist generate
-open TypeLock.xcworkspace
-```
-
-`main` 分支用于追踪上游 TypeSwitch，开发与发布都应在 `dev` 分支进行。
-
-运行与 Pull Request 相同的格式检查和测试：
+运行格式、单元测试、release 脚本和许可证检查：
 
 ```bash
 just check
 ```
 
-如需重新生成内容固定且不包含用户真实规则、输入法或统计信息的 README 截图，请先为终端或 Codex 授予“屏幕与系统音频录制”和“辅助功能”权限，然后执行下面的命令。脚本使用隔离的 `TypeLockScreenshots` 演示副本，日常使用的 TypeLock 可以保持运行。
+### CI 与发布
 
-```bash
-./script/generate_readme_screenshots.sh
-```
+- **Build** 在推送到 `dev` 和手动触发时运行：测试、归档 Universal Binary、打包 `TypeLock-macOS-universal.zip`，并上传 checksums artifact。
+- **PR Checks** 在 Pull Request 上运行格式、测试、release 脚本和许可证检查。
+- **Release** 由包含于 `dev` 的 annotated `vX.Y.Z` tag 触发，发布 zip、checksums、签名 Sparkle appcast 和 Artifact Attestation。
+- `main` 只保留只读历史镜像；TypeLock 的开发、构建和发布都在 `dev`。
 
-### 持续集成
+## 🧱 项目结构
 
-- **Build** workflow 会在每次推送到 `dev` 时自动运行，也支持手动 `workflow_dispatch`。它会生成 Xcode 项目、运行完整测试、归档 Universal Binary、打包 `TypeLock-macOS-universal.zip`，并将 zip 与 checksum 作为 GitHub Actions artifact 上传。
-- **PR Checks** workflow 会在 Pull Request 上运行发布脚本测试、workflow lint、SwiftFormat 检查和单元测试。
-
-### 发布流程
-
-推送包含于 `dev`、格式严格为 `vX.Y.Z` 的 annotated tag 后，GitHub Actions 会构建正式版本：
-
-```bash
-git checkout dev
-git tag -a v0.10.4 -m "TypeLock v0.10.4"
-git push origin v0.10.4
-```
-
-发布 workflow 会校验标签属于 `origin/dev`、运行测试、构建 universal macOS app、打包 zip、发布 SHA-256 checksum、使用 EdDSA 签名 Sparkle `appcast.xml`、为发布 zip 生成 GitHub Artifact Attestation，并发布 GitHub Release。打 tag 前请先在 `CHANGELOG.md` 中添加对应的 `## vX.Y.Z` 章节。
-
-不要重新触发或构建已经正式发布的 tag。如果发布运行失败，请在 Actions 页面仅重跑失败的任务，或执行：
-
-```bash
-FAILED_RUN_ID=123456789 # 替换为失败的 workflow run ID。
-gh run rerun "$FAILED_RUN_ID" --failed --repo zbl-jerry/TypeLock
-```
-
-如果发布保护提示存在未完成的草稿 Release，请先检查它：
-
-```bash
-gh release view v0.10.0 --repo zbl-jerry/TypeLock --json isDraft,url,assets
-```
-
-仅在确认 `isDraft` 为 `true` 后，删除该草稿但保留 tag，然后仅重跑失败的任务：
-
-```bash
-gh release delete v0.10.0 --repo zbl-jerry/TypeLock --yes
-FAILED_RUN_ID=123456789 # 替换为失败的 workflow run ID。
-gh run rerun "$FAILED_RUN_ID" --failed --repo zbl-jerry/TypeLock
-```
-
-workflow 会拒绝重新构建或覆盖已完成的正式 Release。修复内容应使用新的 SemVer tag 发布。
-
-下载发布 zip 后，可使用 GitHub CLI 验证其构建来源：
-
-```bash
-gh attestation verify TypeLock-macOS-universal.zip --repo zbl-jerry/TypeLock
+```text
+TypeLock/Sources/App              TCA feature、依赖、切换解析
+TypeLock/Sources/Core             模型、存储、URL 辅助
+TypeLock/Sources/Services         输入法、浏览器/终端、更新、可靠性
+TypeLock/Sources/UI               菜单栏、设置、指示器
+TypeLock/Sources/Migrations       schema 版本
+TypeLockTests                     XCTest 覆盖
+TypeLockCursorHelper              可选 Accessibility helper
+Documentation                     当前产品与架构文档
 ```
 
 ## 🙏 致谢
 
-TypeLock 是 [TypeSwitch](https://github.com/ygsgdbd/TypeSwitch) 的 fork，并受到以下项目和社区启发：
-
-- [TypeSwitch](https://github.com/ygsgdbd/TypeSwitch)，上游的按 App 自动切换输入法工具
 - [SwitchKey](https://github.com/itsuhane/SwitchKey)，一款 macOS 输入法切换工具
 - Swift 和 SwiftUI 社区
 - 提供反馈的贡献者和用户

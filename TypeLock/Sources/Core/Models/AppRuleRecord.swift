@@ -15,7 +15,7 @@ struct AppRuleRecord: Identifiable, Codable, Hashable, Sendable {
     /// The strategy applied when an app returns to the foreground.
     ///
     /// The persisted `strategy` key is kept for backward compatibility with
-    /// existing TypeLock/TypeSwitch stores.
+    /// existing TypeLock stores.
     var activationStrategy: InputMethodStrategy {
         get { strategy }
         set { strategy = newValue }
