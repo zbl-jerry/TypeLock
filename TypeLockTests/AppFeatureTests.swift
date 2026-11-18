@@ -277,6 +277,48 @@ final class AppFeatureTests: XCTestCase {
         XCTAssertEqual(store.state.fallbackStrategy, .none)
     }
 
+    func testApplySettingsImportReplacesStores() async {
+        let payload = SettingsImportPayload(
+            appRulesStore: AppRulesStore(rules: [
+                "com.test.editor": AppRuleRecord(
+                    bundleId: "com.test.editor",
+                    lastKnownPath: "/Applications/Editor.app",
+                    lastKnownName: "Editor",
+                    strategy: .fixed(inputMethodId: "ime.en"),
+                    launchStrategy: .fixed(inputMethodId: "ime.en"),
+                    createdAt: Date(timeIntervalSince1970: 100),
+                    updatedAt: Date(timeIntervalSince1970: 100)
+                ),
+            ]),
+            fallbackRuleStore: FallbackRuleStore(
+                strategy: .fixed(inputMethodId: "ime.abc"),
+                launchStrategy: .followLast(lastInputMethodId: "ime.zh")
+            ),
+            appSwitchStatisticsStore: AppSwitchStatisticsStore(counts: ["com.test.editor": 4])
+        )
+
+        let store = TestStore(initialState: AppFeature.State()) {
+            AppFeature()
+        }
+
+        await store.send(.view(.applySettingsImport(payload))) {
+            $0.$appRulesStore.withLock { $0 = payload.appRulesStore }
+            $0.$fallbackRuleStore.withLock { $0 = payload.fallbackRuleStore }
+            $0.$appSwitchStatisticsStore.withLock { $0 = payload.appSwitchStatisticsStore }
+        }
+
+        XCTAssertEqual(store.state.appRules, payload.appRulesStore.rules)
+        XCTAssertEqual(store.state.fallbackStrategy, .fixed(inputMethodId: "ime.abc"))
+        XCTAssertEqual(
+            store.state.fallbackLaunchStrategy,
+            .followLast(lastInputMethodId: "ime.zh")
+        )
+        XCTAssertEqual(
+            store.state.appSwitchStatisticsStore.counts,
+            ["com.test.editor": 4]
+        )
+    }
+
     func testSetFallbackLaunchStrategyAllowsFollowLast() async {
         var initialState = AppFeature.State()
         initialState.$fallbackRuleStore.withLock {

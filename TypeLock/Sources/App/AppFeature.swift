@@ -94,6 +94,7 @@ struct AppFeature {
     }
 
     enum ViewAction: Equatable, Sendable {
+        case applySettingsImport(SettingsImportPayload)
         case clearSwitchStatisticsTapped
         case ignoreAppTapped(AppInfo)
         case reloadInputMethodsTapped
@@ -179,6 +180,12 @@ struct AppFeature {
 
             case .response(.launchAtLoginLoaded(let status)):
                 state.launchAtLoginStatus = status
+                return .none
+
+            case .view(.applySettingsImport(let payload)):
+                state.$appRulesStore.withLock { $0 = payload.appRulesStore }
+                state.$fallbackRuleStore.withLock { $0 = payload.fallbackRuleStore }
+                state.$appSwitchStatisticsStore.withLock { $0 = payload.appSwitchStatisticsStore }
                 return .none
 
             case .view(.clearSwitchStatisticsTapped):
