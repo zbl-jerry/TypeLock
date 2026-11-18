@@ -85,6 +85,7 @@ final class SwitchingFeatureTests: XCTestCase {
         let store = TestStore(initialState: initialState) {
             SwitchingFeature()
         }
+        store.dependencies.date = .constant(Date(timeIntervalSince1970: 10))
         store.dependencies.inputMethodClient.currentInputMethodId = { "ime.zh" }
         store.dependencies.inputMethodClient.switchToInputMethod = { inputMethodId in
             await recorder.record(inputMethodId)
