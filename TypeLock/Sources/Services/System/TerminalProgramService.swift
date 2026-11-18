@@ -20,8 +20,21 @@ enum TerminalProgramService {
               let application = NSWorkspace.shared.frontmostApplication,
               let bundleIdentifier = application.bundleIdentifier,
               terminalBundleIdentifiers.contains(bundleIdentifier),
-              let tty = focusedTTY(bundleIdentifier: bundleIdentifier),
-              let processGroupID = foregroundProcessGroup(tty: tty),
+              let outerTTY = focusedTTY(bundleIdentifier: bundleIdentifier)
+        else {
+            return nil
+        }
+
+        var tty = outerTTY
+        if let processGroupID = foregroundProcessGroup(tty: outerTTY),
+           let outerProgram = processName(processGroupID: processGroupID),
+           TerminalRule.normalized(outerProgram) == "tmux",
+           let paneTTY = tmuxPaneTTY(clientTTY: outerTTY)
+        {
+            tty = paneTTY
+        }
+
+        guard let processGroupID = foregroundProcessGroup(tty: tty),
               let program = processName(processGroupID: processGroupID)
         else {
             return nil
@@ -78,9 +91,39 @@ enum TerminalProgramService {
             .first { !$0.isEmpty }
     }
 
+    private static func tmuxPaneTTY(clientTTY: String) -> String? {
+        let candidates = [
+            "/opt/homebrew/bin/tmux",
+            "/usr/local/bin/tmux",
+            "/usr/bin/tmux",
+        ]
+        guard let tmux = candidates.first(where: FileManager.default.isExecutableFile(atPath:)),
+              let output = runCommand(
+                  executable: tmux,
+                  arguments: ["list-clients", "-F", "#{client_tty}\t#{pane_tty}"]
+              )
+        else {
+            return nil
+        }
+
+        for line in output.split(whereSeparator: \.isNewline) {
+            let fields = line.split(separator: "\t", maxSplits: 1).map(String.init)
+            guard fields.count == 2 else { continue }
+            if fields[0] == clientTTY, fields[1].hasPrefix("/dev/") {
+                return fields[1]
+            }
+        }
+
+        return nil
+    }
+
     private static func runPS(arguments: [String]) -> String? {
+        runCommand(executable: "/bin/ps", arguments: arguments)
+    }
+
+    private static func runCommand(executable: String, arguments: [String]) -> String? {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/ps")
+        process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = arguments
 
         let pipe = Pipe()
