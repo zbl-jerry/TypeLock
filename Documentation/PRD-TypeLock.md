@@ -1608,10 +1608,22 @@ struct ReliabilityPreferences: Codable {
 
 ### 15.4 本地验证
 
-- 使用临时 SwiftPM 包（不污染仓库）完成整包编译。
+- 本地使用 **Xcode 26.3 / Swift 6.2.4** 生成 Tuist 工程并执行完整 XCTest：**225 个测试，0 失败**。
 - 纯逻辑断言覆盖迁移、Resolver、备份、排除、Indicator 布局、快捷键、浏览器/终端匹配。
 - 设置 UI 通过 TCA/SwiftUI stub 类型检查。
-- 本机只有 Command Line Tools，缺少 XCTest 模块，完整 XCTest 仅在 CI 执行。
+- CI 与本地均固定 Xcode 26.3；`just test` 会拒绝更低版本。
+
+### 15.5 工具链固定
+
+| 组件 | 固定版本 | 原因 |
+|---|---|---|
+| Xcode | 26.3 | CI 与本地一致；Swift 6.2.4 |
+| `swift-dependencies` | 1.12.0 | 1.13+ 的 manifest 要求 Swift 6.3 |
+| `swift-syntax` | 602.0.0 | 603+ 面向 Swift 6.3 |
+| TCA | 1.26.0 | 当前应用与测试基线 |
+| Sparkle | 2.9.4 | 更新源与 Universal Binary |
+
+> 升级 Xcode 前不要提升 `swift-dependencies` / `swift-syntax`；升级后需重新生成并校验 `.package.resolved`。
 
 ---
 

@@ -98,6 +98,12 @@ This project uses:
 - [ImageMagick](https://imagemagick.org/)
 - RTK (`rtk`, required by the screenshot generation script)
 
+### Toolchain Pins
+
+- CI pins **Xcode 26.3**; `just test` refuses older Xcode versions.
+- `swift-dependencies` is pinned to **1.12.0** and transitive `swift-syntax` to **602.0.0** because newer releases require Swift 6.3.
+- Do not bump these pins without moving the CI toolchain to a newer Xcode.
+
 ### Build Steps
 
 Install the required development tools:
@@ -106,6 +112,12 @@ Install the required development tools:
 brew install just swiftformat
 brew tap tuist/tuist
 brew install --formula tuist
+```
+
+Select Xcode 26.3+ before generating the project:
+
+```bash
+sudo xcode-select -s /Applications/Xcode-26.3.0.app
 ```
 
 Clone and generate the Xcode project:

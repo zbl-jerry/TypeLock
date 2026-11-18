@@ -12,6 +12,8 @@ let project = Project(
         developmentRegion: "zh-Hans"
     ),
     packages: [
+        // Xcode 26.3 / Swift 6.2: keep swift-dependencies at 1.12.0 and
+        // transitive swift-syntax at 602.0.0 (see .package.resolved).
         .remote(url: "https://github.com/pointfreeco/swift-case-paths", requirement: .exact("1.8.0")),
         .remote(url: "https://github.com/pointfreeco/swift-composable-architecture", requirement: .exact("1.26.0")),
         .remote(url: "https://github.com/pointfreeco/swift-dependencies", requirement: .exact("1.12.0")),

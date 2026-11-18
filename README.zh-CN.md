@@ -98,6 +98,12 @@ TypeLock 以 Universal Binary `.zip` 的形式从 [GitHub Releases](https://gith
 - [ImageMagick](https://imagemagick.org/)
 - RTK（`rtk`，截图生成脚本需要）
 
+### 工具链固定
+
+- CI 固定使用 **Xcode 26.3**；`just test` 会拒绝低于 26.3 的 Xcode。
+- `swift-dependencies` 固定为 **1.12.0**，传递依赖 `swift-syntax` 固定为 **602.0.0**，因为更新版本要求 Swift 6.3。
+- 在 CI 工具链升级前不要提升这些版本。
+
 ### 构建步骤
 
 安装所需开发工具：
@@ -106,6 +112,12 @@ TypeLock 以 Universal Binary `.zip` 的形式从 [GitHub Releases](https://gith
 brew install just swiftformat
 brew tap tuist/tuist
 brew install --formula tuist
+```
+
+生成工程前先选择 Xcode 26.3+：
+
+```bash
+sudo xcode-select -s /Applications/Xcode-26.3.0.app
 ```
 
 克隆仓库并生成 Xcode 项目：

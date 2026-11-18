@@ -297,5 +297,9 @@ assert_contains "$BUILD_WORKFLOW" 'actions/upload-artifact@v7'
 assert_contains "$BUILD_WORKFLOW" 'run: script/check_licenses.sh'
 assert_contains "$WORKFLOW" 'run: script/check_licenses.sh'
 assert_contains "$JUSTFILE" 'test-release-scripts:'
+assert_contains "$JUSTFILE" 'test: check-xcode check-tuist'
+assert_contains "$WORKFLOW" "xcode-version: '26.3'"
+assert_contains "$BUILD_WORKFLOW" "xcode-version: '26.3'"
+assert_contains "$PR_WORKFLOW" "xcode-version: '26.3'"
 
 echo "Release script tests passed."

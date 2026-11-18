@@ -84,7 +84,7 @@ lint-ci: check-swiftformat
     swiftformat --cache ignore --lint . --reporter github-actions-log
 
 # Generate the Tuist project and run the complete XCTest suite.
-test: check-tuist
+test: check-xcode check-tuist
     tuist generate --no-open
     xcodebuild test \
         -project TypeLock.xcodeproj \
@@ -107,6 +107,30 @@ test-license-checks:
 
 # Run the same formatting and test checks required by pull requests.
 check: lint test test-release-scripts test-license-checks
+
+[private]
+check-xcode:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    required_major=26
+    required_minor=3
+
+    if ! version="$(xcodebuild -version 2>/dev/null | awk 'NR == 1 { print $2 }')" || [[ -z "$version" ]]; then
+        echo "Xcode 26.3+ is required, but xcodebuild is unavailable." >&2
+        echo "Select Xcode 26.3+ with:" >&2
+        echo "  sudo xcode-select -s /Applications/Xcode-26.3.0.app" >&2
+        exit 1
+    fi
+
+    major="${version%%.*}"
+    rest="${version#*.}"
+    minor="${rest%%.*}"
+
+    if (( major < required_major || (major == required_major && minor < required_minor) )); then
+        echo "Xcode 26.3+ is required. Found Xcode ${version}." >&2
+        exit 1
+    fi
 
 [private]
 check-swiftformat:
