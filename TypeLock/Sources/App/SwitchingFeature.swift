@@ -353,6 +353,7 @@ struct SwitchingFeature {
                     )
                 if shouldShowIndicator {
                     indicatorClient.show(
+                        pendingSwitch.inputMethodId,
                         pendingSwitch.inputMethodName ?? pendingSwitch.inputMethodId,
                         preferences
                     )

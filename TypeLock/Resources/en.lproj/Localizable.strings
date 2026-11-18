@@ -239,3 +239,12 @@
 
 // Update channel
 "settings.about.beta_updates" = "Receive Beta Updates";
+
+// Indicator always-on and appearance
+"settings.indicator.always_on" = "Always On";
+"settings.indicator.show_caps_lock" = "Show Caps Lock";
+"settings.indicator.appearance" = "Per-Input-Method Appearance";
+"settings.indicator.label" = "Short Label";
+"settings.indicator.background_hex" = "Background #RRGGBB";
+"settings.indicator.text_hex" = "Text #RRGGBB";
+"settings.indicator.reset_colors" = "Clear Colors";

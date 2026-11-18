@@ -239,3 +239,12 @@
 
 // 更新通道
 "settings.about.beta_updates" = "接收 Beta 更新";
+
+// Indicator 常驻与外观
+"settings.indicator.always_on" = "常驻显示";
+"settings.indicator.show_caps_lock" = "显示 Caps Lock";
+"settings.indicator.appearance" = "每输入法外观";
+"settings.indicator.label" = "短标签";
+"settings.indicator.background_hex" = "背景色 #RRGGBB";
+"settings.indicator.text_hex" = "文字色 #RRGGBB";
+"settings.indicator.reset_colors" = "清除颜色";

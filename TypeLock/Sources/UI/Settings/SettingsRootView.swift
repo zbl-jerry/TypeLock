@@ -882,6 +882,26 @@ private struct IndicatorSettingsPane: View {
         store.send(.view(.setIndicatorPreferences(draft)))
     }
 
+    private func updateAppearance(
+        _ inputMethodId: String,
+        change: (inout InputMethodAppearance) -> Void
+    ) {
+        var preferences = store.indicator
+        var appearance = preferences.appearances[inputMethodId] ?? InputMethodAppearance()
+        change(&appearance)
+
+        if appearance.label == nil,
+           appearance.backgroundColorHex == nil,
+           appearance.textColorHex == nil
+        {
+            preferences.appearances.removeValue(forKey: inputMethodId)
+        } else {
+            preferences.appearances[inputMethodId] = appearance
+        }
+
+        store.send(.view(.setIndicatorPreferences(preferences)))
+    }
+
     private func spacingKey(_ spacing: IndicatorSpacing) -> LocalizedStringKey {
         switch spacing {
         case .none: "settings.indicator.spacing.none"
@@ -1014,6 +1034,73 @@ private struct IndicatorSettingsPane: View {
                     Text("settings.indicator.size.large").tag(IndicatorSize.large)
                 }
                 .pickerStyle(.segmented)
+            }
+
+            SettingsRow {
+                Toggle("settings.indicator.always_on", isOn: Binding(
+                    get: { store.indicator.alwaysOn },
+                    set: { value in update { $0.alwaysOn = value } }
+                ))
+                .toggleStyle(.switch)
+            }
+
+            SettingsRow {
+                Toggle("settings.indicator.show_caps_lock", isOn: Binding(
+                    get: { store.indicator.showCapsLock },
+                    set: { value in update { $0.showCapsLock = value } }
+                ))
+                .toggleStyle(.switch)
+            }
+
+            SettingsRow {
+                Text("settings.indicator.appearance")
+                    .font(.headline)
+            }
+
+            ForEach(store.inputMethods) { inputMethod in
+                SettingsRow {
+                    Text(inputMethod.name)
+                    Spacer()
+                    TextField("settings.indicator.label", text: Binding(
+                        get: { store.indicator.appearances[inputMethod.id]?.label ?? "" },
+                        set: { value in
+                            updateAppearance(inputMethod.id) {
+                                $0.label = value.isEmpty ? nil : value
+                            }
+                        }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 100)
+
+                    TextField("settings.indicator.background_hex", text: Binding(
+                        get: { store.indicator.appearances[inputMethod.id]?.backgroundColorHex ?? "" },
+                        set: { value in
+                            updateAppearance(inputMethod.id) {
+                                $0.backgroundColorHex = value.isEmpty ? nil : value
+                            }
+                        }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 110)
+
+                    TextField("settings.indicator.text_hex", text: Binding(
+                        get: { store.indicator.appearances[inputMethod.id]?.textColorHex ?? "" },
+                        set: { value in
+                            updateAppearance(inputMethod.id) {
+                                $0.textColorHex = value.isEmpty ? nil : value
+                            }
+                        }
+                    ))
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 110)
+
+                    Button("settings.indicator.reset_colors") {
+                        updateAppearance(inputMethod.id) {
+                            $0.backgroundColorHex = nil
+                            $0.textColorHex = nil
+                        }
+                    }
+                }
             }
         }
         .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))

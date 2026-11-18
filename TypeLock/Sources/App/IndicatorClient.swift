@@ -1,20 +1,29 @@
 import ComposableArchitecture
 
 struct IndicatorClient: Sendable {
-    var show: @Sendable (String, IndicatorPreferences) -> Void
+    var show: @Sendable (String, String, IndicatorPreferences) -> Void
+    var updateAlwaysOn: @Sendable (IndicatorPreferences) -> Void
 }
 
 extension IndicatorClient: DependencyKey {
-    static let liveValue = IndicatorClient { inputMethodName, preferences in
-        Task { @MainActor in
-            IndicatorWindowController.shared.show(
-                inputMethodName: inputMethodName,
-                preferences: preferences
-            )
+    static let liveValue = IndicatorClient(
+        show: { inputMethodId, inputMethodName, preferences in
+            Task { @MainActor in
+                IndicatorWindowController.shared.show(
+                    inputMethodId: inputMethodId,
+                    inputMethodName: inputMethodName,
+                    preferences: preferences
+                )
+            }
+        },
+        updateAlwaysOn: { preferences in
+            Task { @MainActor in
+                IndicatorWindowController.shared.updateAlwaysOn(preferences: preferences)
+            }
         }
-    }
+    )
 
-    static let testValue = IndicatorClient { _, _ in }
+    static let testValue = IndicatorClient(show: { _, _, _ in }, updateAlwaysOn: { _ in })
 }
 
 extension DependencyValues {

@@ -219,7 +219,16 @@ final class AppStorageCompatibilityTests: XCTestCase {
             duration: .fiveSeconds,
             position: .mouse,
             style: .titleOnly,
-            size: .large
+            size: .large,
+            showCapsLock: true,
+            alwaysOn: true,
+            appearances: [
+                "ime.en": InputMethodAppearance(
+                    label: "EN",
+                    backgroundColorHex: "112233",
+                    textColorHex: "FFFFFF"
+                ),
+            ]
         )
 
         let data = try JSONEncoder().encode(preferences)

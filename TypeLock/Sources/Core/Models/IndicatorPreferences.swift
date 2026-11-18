@@ -77,6 +77,22 @@ enum IndicatorSpacing: String, CaseIterable, Codable, Identifiable, Sendable {
     }
 }
 
+struct InputMethodAppearance: Codable, Hashable, Sendable {
+    var label: String?
+    var backgroundColorHex: String?
+    var textColorHex: String?
+
+    init(
+        label: String? = nil,
+        backgroundColorHex: String? = nil,
+        textColorHex: String? = nil
+    ) {
+        self.label = label
+        self.backgroundColorHex = backgroundColorHex
+        self.textColorHex = textColorHex
+    }
+}
+
 struct IndicatorPreferences: Codable, Hashable, Sendable {
     var v: Int
     var enabled: Bool
@@ -90,6 +106,9 @@ struct IndicatorPreferences: Codable, Hashable, Sendable {
     var spacing: IndicatorSpacing
     var style: IndicatorStyle
     var size: IndicatorSize
+    var showCapsLock: Bool
+    var alwaysOn: Bool
+    var appearances: [String: InputMethodAppearance]
 
     init(
         v: Int = MigrationVersion.current,
@@ -103,7 +122,10 @@ struct IndicatorPreferences: Codable, Hashable, Sendable {
         alignment: IndicatorAlignment = .center,
         spacing: IndicatorSpacing = .s,
         style: IndicatorStyle = .iconAndTitle,
-        size: IndicatorSize = .normal
+        size: IndicatorSize = .normal,
+        showCapsLock: Bool = false,
+        alwaysOn: Bool = false,
+        appearances: [String: InputMethodAppearance] = [:]
     ) {
         self.v = v
         self.enabled = enabled
@@ -117,6 +139,9 @@ struct IndicatorPreferences: Codable, Hashable, Sendable {
         self.spacing = spacing
         self.style = style
         self.size = size
+        self.showCapsLock = showCapsLock
+        self.alwaysOn = alwaysOn
+        self.appearances = appearances
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -132,6 +157,9 @@ struct IndicatorPreferences: Codable, Hashable, Sendable {
         case spacing
         case style
         case size
+        case showCapsLock
+        case alwaysOn
+        case appearances
     }
 
     init(from decoder: Decoder) throws {
@@ -152,6 +180,12 @@ struct IndicatorPreferences: Codable, Hashable, Sendable {
         spacing = try container.decodeIfPresent(IndicatorSpacing.self, forKey: .spacing) ?? .s
         style = try container.decodeIfPresent(IndicatorStyle.self, forKey: .style) ?? .iconAndTitle
         size = try container.decodeIfPresent(IndicatorSize.self, forKey: .size) ?? .normal
+        showCapsLock = try container.decodeIfPresent(Bool.self, forKey: .showCapsLock) ?? false
+        alwaysOn = try container.decodeIfPresent(Bool.self, forKey: .alwaysOn) ?? false
+        appearances = try container.decodeIfPresent(
+            [String: InputMethodAppearance].self,
+            forKey: .appearances
+        ) ?? [:]
     }
 
     func encode(to encoder: Encoder) throws {
@@ -169,6 +203,9 @@ struct IndicatorPreferences: Codable, Hashable, Sendable {
         try container.encode(spacing, forKey: .spacing)
         try container.encode(style, forKey: .style)
         try container.encode(size, forKey: .size)
+        try container.encode(showCapsLock, forKey: .showCapsLock)
+        try container.encode(alwaysOn, forKey: .alwaysOn)
+        try container.encode(appearances, forKey: .appearances)
     }
 
     mutating func migrateIfNeeded() {

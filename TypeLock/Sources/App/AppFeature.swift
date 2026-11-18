@@ -7,6 +7,7 @@ struct AppFeature {
     @Dependency(\.appAvailabilityClient) var appAvailabilityClient
     @Dependency(\.date.now) var now
     @Dependency(\.hotkeyClient) var hotkeyClient
+    @Dependency(\.indicatorClient) var indicatorClient
     @Dependency(\.launchAtLoginClient) var launchAtLoginClient
     @Dependency(\.workspaceClient) var workspaceClient
 
@@ -211,6 +212,7 @@ struct AppFeature {
                 state.$browserRulesStore.withLock { $0.migrateIfNeeded() }
                 state.$terminalRulesStore.withLock { $0.migrateIfNeeded() }
                 state.$reliabilityPreferences.withLock { $0.migrateIfNeeded() }
+                indicatorClient.updateAlwaysOn(state.indicatorPreferences)
                 state.appAvailability = appAvailabilityClient.snapshot(for: state.appRules.values)
                 normalizeFallbackRule(in: &state)
                 let initialSwitchingEffect = reduceSwitching(.loadInitialState, state: &state)
@@ -373,6 +375,7 @@ struct AppFeature {
                 state.$indicatorPreferences.withLock {
                     $0 = preferences
                 }
+                indicatorClient.updateAlwaysOn(preferences)
                 return .none
 
             case .view(.setHotkeyPreferences(let preferences)):
