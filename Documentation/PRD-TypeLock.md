@@ -1576,4 +1576,43 @@ struct ReliabilityPreferences: Codable {
 
 ---
 
+## 15. 实现状态（2026-11-18）
+
+### 15.1 已实现
+
+| 范围 | 状态 |
+|---|---|
+| Phase 0：设置窗口、权限、schema v2、迁移、`SwitchResolver`、许可证扫描 | 完成 |
+| Phase 1：双时机规则、配置导入导出、App Rules、排除列表 | 完成 |
+| Phase 2：Indicator 基础、光标锚定、9 向对齐/间距、Caps Lock、Always-on、每输入法配色/标签、全局快捷键 | 完成 |
+| Phase 3：浏览器域名/后缀/正则规则、前台浏览器 URL、终端规则 | 完成 |
+| Phase 4：CJKV 焦点落定、Cursor Helper、Cursor Lag Fix、Beta 通道、ja/ko/fa 本地化 | 完成 |
+| F-19 本地化 | 四语言完整；ja/ko/fa 常用界面已翻译，技术/错误文案暂以英文兜底 |
+| F-27 Cursor Helper | 已提供可选独立 helper、AX 直读与回退；helper 未签名时按 best-effort 处理 |
+
+### 15.2 终端与浏览器范围
+
+- 终端：Terminal、iTerm2（AppleScript + tty + 前台进程组）；tmux（client tty → pane tty）；WezTerm（CLI active pane）。
+- 终端未适配：Ghostty、Alacritty、zellij。没有稳定脚本接口，回退到终端 App 规则。
+- 浏览器：精确域名、域名后缀、URL 正则；通过前台浏览器 AX URL 匹配。
+- 浏览器不做“地址栏聚焦”独立规则，按产品决策只做域名匹配。
+
+### 15.3 已禁用 / 暂缓
+
+| 功能 | 决策 |
+|---|---|
+| F-21 每 App 强制英文标点 | 永久禁用 |
+| F-22 每 App 功能键模式 | 暂缓，不进入本期 |
+| F-13 Spotlight/Alfred/Raycast 浮窗仲裁 | 暂缓，先不处理 |
+| F-31 Developer ID 签名与公证 | 暂缓，当前无证书；继续未签名分发 |
+
+### 15.4 本地验证
+
+- 使用临时 SwiftPM 包（不污染仓库）完成整包编译。
+- 纯逻辑断言覆盖迁移、Resolver、备份、排除、Indicator 布局、快捷键、浏览器/终端匹配。
+- 设置 UI 通过 TCA/SwiftUI stub 类型检查。
+- 本机只有 Command Line Tools，缺少 XCTest 模块，完整 XCTest 仅在 CI 执行。
+
+---
+
 *本文档为产品规划草案，所有技术方案需在实现前完成技术评审；功能范围与默认值以评审结论为准。*
