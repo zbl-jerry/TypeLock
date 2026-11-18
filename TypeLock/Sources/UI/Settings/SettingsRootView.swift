@@ -29,6 +29,8 @@ struct SettingsRootView: View {
                         GeneralSettingsPane(store: store)
                     case .apps:
                         AppRulesSettingsPane(store: store)
+                    case .exclusions:
+                        ExclusionsSettingsPane(store: store)
                     case .troubleshooting:
                         TroubleshootingSettingsPane()
                     case .about:
@@ -482,6 +484,116 @@ private struct ActivationStrategyMenuContent: View {
             Text(title)
         }
         .toggleStyle(.checkbox)
+    }
+}
+
+private struct ExclusionsSettingsPane: View {
+    let store: StoreOf<AppFeature>
+
+    private var rules: [AppRuleRecord] {
+        store.appRules.values.sorted {
+            $0.lastKnownName.localizedStandardCompare($1.lastKnownName) == .orderedAscending
+        }
+    }
+
+    private var switchingBundleIds: [String] {
+        let ignored = store.appRules.values
+            .filter { $0.strategy == .ignored }
+            .map(\.bundleId)
+        return Array(store.exclusions.switchingBundleIds.union(ignored)).sorted()
+    }
+
+    private var indicatorBundleIds: [String] {
+        Array(store.exclusions.indicatorBundleIds).sorted()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            ExclusionSection(
+                title: "settings.exclusions.switching",
+                bundleIds: switchingBundleIds,
+                rules: rules,
+                onAdd: { bundleId in
+                    store.send(.view(.setSwitchingExclusion(bundleId: bundleId, excluded: true)))
+                },
+                onRemove: { bundleId in
+                    if store.appRules[bundleId]?.strategy == .ignored {
+                        store.send(.view(.restoreIgnoredAppTapped(bundleId: bundleId)))
+                    } else {
+                        store.send(.view(.setSwitchingExclusion(bundleId: bundleId, excluded: false)))
+                    }
+                }
+            )
+
+            ExclusionSection(
+                title: "settings.exclusions.indicator",
+                bundleIds: indicatorBundleIds,
+                rules: rules,
+                onAdd: { bundleId in
+                    store.send(.view(.setIndicatorExclusion(bundleId: bundleId, excluded: true)))
+                },
+                onRemove: { bundleId in
+                    store.send(.view(.setIndicatorExclusion(bundleId: bundleId, excluded: false)))
+                }
+            )
+        }
+    }
+}
+
+private struct ExclusionSection: View {
+    let title: LocalizedStringKey
+    let bundleIds: [String]
+    let rules: [AppRuleRecord]
+    let onAdd: (String) -> Void
+    let onRemove: (String) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text(title)
+                    .font(.headline)
+                Spacer()
+                Menu("settings.exclusions.add") {
+                    ForEach(rules) { rule in
+                        Button(rule.lastKnownName) {
+                            onAdd(rule.bundleId)
+                        }
+                    }
+                }
+                .disabled(rules.isEmpty)
+            }
+            .padding()
+
+            if bundleIds.isEmpty {
+                Text("settings.exclusions.empty")
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
+                    .padding(.bottom)
+            } else {
+                ForEach(bundleIds, id: \.self) { bundleId in
+                    HStack {
+                        Text(name(for: bundleId))
+                        Text(bundleId)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("settings.exclusions.remove") {
+                            onRemove(bundleId)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .overlay(alignment: .bottom) {
+                        Divider()
+                    }
+                }
+            }
+        }
+        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func name(for bundleId: String) -> String {
+        rules.first(where: { $0.bundleId == bundleId })?.lastKnownName ?? bundleId
     }
 }
 

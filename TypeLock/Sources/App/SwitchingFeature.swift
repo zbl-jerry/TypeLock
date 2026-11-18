@@ -69,6 +69,7 @@ struct SwitchingFeature {
         @Shared var appRulesStore: AppRulesStore
         @Shared var appSwitchStatisticsStore: AppSwitchStatisticsStore
         @Shared var fallbackRuleStore: FallbackRuleStore
+        @Shared var exclusionsStore: ExclusionsStore
         var currentFrontmostBundleId: String?
         var inputMethodCatalogStatus: InputMethodCatalogStatus = .loading
         var inputMethods: [InputMethod] = []
@@ -86,6 +87,10 @@ struct SwitchingFeature {
             appRulesStore: Shared<AppRulesStore>,
             appSwitchStatisticsStore: Shared<AppSwitchStatisticsStore>,
             fallbackRuleStore: Shared<FallbackRuleStore>,
+            exclusionsStore: Shared<ExclusionsStore> = Shared(
+                wrappedValue: ExclusionsStore(),
+                .fileStorage(.exclusionsStoreURL)
+            ),
             currentFrontmostBundleId: String? = nil,
             inputMethodCatalogStatus: InputMethodCatalogStatus = .loading,
             inputMethods: [InputMethod] = [],
@@ -94,6 +99,7 @@ struct SwitchingFeature {
             self._appRulesStore = appRulesStore
             self._appSwitchStatisticsStore = appSwitchStatisticsStore
             self._fallbackRuleStore = fallbackRuleStore
+            self._exclusionsStore = exclusionsStore
             self.currentFrontmostBundleId = currentFrontmostBundleId
             self.inputMethodCatalogStatus = inputMethodCatalogStatus
             self.inputMethods = inputMethods
@@ -458,6 +464,10 @@ struct SwitchingFeature {
         isLaunch: Bool,
         state: State
     ) -> SwitchTargetResolution {
+        guard !state.exclusionsStore.isExcludedFromSwitching(bundleId) else {
+            return .none
+        }
+
         let resolution: SwitchResolver.Resolution
         if isLaunch {
             resolution = SwitchResolver.resolveLaunch(

@@ -151,6 +151,40 @@ final class AppStorageCompatibilityTests: XCTestCase {
         XCTAssertEqual(store.launchStrategy, .none)
     }
 
+    func testExclusionsStoreRoundTripsAndMigrates() throws {
+        var store = ExclusionsStore(
+            v: 1,
+            switchingBundleIds: ["com.test.terminal"],
+            indicatorBundleIds: ["com.test.chat"]
+        )
+
+        let data = try JSONEncoder().encode(store)
+        let decoded = try JSONDecoder().decode(ExclusionsStore.self, from: data)
+        XCTAssertEqual(decoded, store)
+
+        store.migrateIfNeeded()
+        XCTAssertEqual(store.v, MigrationVersion.current)
+        XCTAssertTrue(store.isExcludedFromSwitching("com.test.terminal"))
+        XCTAssertTrue(store.isExcludedFromIndicator("com.test.chat"))
+    }
+
+    func testExclusionsStoreURLUsesExclusionsFilename() {
+        let applicationSupportDirectory = URL(fileURLWithPath: "/tmp/Application Support", isDirectory: true)
+        let url = URL.exclusionsStoreFileURL(
+            applicationSupportDirectory: applicationSupportDirectory,
+            bundleIdentifier: "com.test.TypeLock"
+        )
+
+        XCTAssertEqual(AppStorageConfiguration.exclusionsFilename, "exclusions.json")
+        XCTAssertEqual(
+            url.path,
+            applicationSupportDirectory
+                .appending(path: "com.test.TypeLock", directoryHint: .isDirectory)
+                .appending(path: AppStorageConfiguration.exclusionsFilename)
+                .path
+        )
+    }
+
     func testAppSwitchStatisticsStoreDefaultsAndEncoding() throws {
         let defaultStore = AppSwitchStatisticsStore()
         XCTAssertTrue(defaultStore.counts.isEmpty)

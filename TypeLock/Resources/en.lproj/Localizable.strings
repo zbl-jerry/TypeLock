@@ -157,3 +157,10 @@
 "settings.apps.inherit_global" = "Inherit Global";
 "settings.apps.no_switch" = "No Switch";
 "settings.apps.ignored" = "Excluded";
+
+// App exclusions
+"settings.exclusions.switching" = "App Switching";
+"settings.exclusions.indicator" = "Indicator";
+"settings.exclusions.add" = "Add App";
+"settings.exclusions.empty" = "No exclusions";
+"settings.exclusions.remove" = "Remove";

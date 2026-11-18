@@ -157,3 +157,10 @@
 "settings.apps.inherit_global" = "继承全局";
 "settings.apps.no_switch" = "不切换";
 "settings.apps.ignored" = "已排除";
+
+// 应用排除
+"settings.exclusions.switching" = "应用切换";
+"settings.exclusions.indicator" = "输入法提示";
+"settings.exclusions.add" = "添加 App";
+"settings.exclusions.empty" = "暂无排除项";
+"settings.exclusions.remove" = "移除";

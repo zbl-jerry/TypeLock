@@ -39,6 +39,10 @@ extension AppFeature.State {
         appSwitchStatisticsStore
     }
 
+    var exclusions: ExclusionsStore {
+        exclusionsStore
+    }
+
     var menuBarIconSystemName: String {
         if inputMethodDiagnostic != nil {
             return "exclamationmark.triangle"

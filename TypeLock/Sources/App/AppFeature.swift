@@ -40,6 +40,7 @@ struct AppFeature {
         @Shared var appRulesStore: AppRulesStore
         @Shared var appSwitchStatisticsStore: AppSwitchStatisticsStore
         @Shared var fallbackRuleStore: FallbackRuleStore
+        @Shared var exclusionsStore: ExclusionsStore
         var switching: SwitchingFeature.State
         var appAvailability = AppAvailabilitySnapshot()
         var isMenuPresented = false
@@ -61,6 +62,10 @@ struct AppFeature {
                 wrappedValue: FallbackRuleStore(),
                 .fileStorage(.fallbackRuleStoreURL)
             ),
+            exclusionsStore: Shared<ExclusionsStore> = Shared(
+                wrappedValue: ExclusionsStore(),
+                .fileStorage(.exclusionsStoreURL)
+            ),
             appAvailability: AppAvailabilitySnapshot = AppAvailabilitySnapshot(),
             currentFrontmostBundleId: String? = nil,
             inputMethodCatalogStatus: SwitchingFeature.State.InputMethodCatalogStatus = .loading,
@@ -75,10 +80,12 @@ struct AppFeature {
             self._appRulesStore = appRulesStore
             self._appSwitchStatisticsStore = appSwitchStatisticsStore
             self._fallbackRuleStore = fallbackRuleStore
+            self._exclusionsStore = exclusionsStore
             self.switching = SwitchingFeature.State(
                 appRulesStore: appRulesStore,
                 appSwitchStatisticsStore: appSwitchStatisticsStore,
                 fallbackRuleStore: fallbackRuleStore,
+                exclusionsStore: exclusionsStore,
                 currentFrontmostBundleId: currentFrontmostBundleId,
                 inputMethodCatalogStatus: inputMethodCatalogStatus,
                 inputMethods: inputMethods,
@@ -103,6 +110,8 @@ struct AppFeature {
         case restoreAllIgnoredAppsTapped
         case restoreIgnoredAppTapped(bundleId: String)
         case retryCurrentAppTapped
+        case setIndicatorExclusion(bundleId: String, excluded: Bool)
+        case setSwitchingExclusion(bundleId: String, excluded: Bool)
         case setFallbackStrategy(InputMethodStrategy)
         case setFallbackLaunchStrategy(InputMethodStrategy)
         case setLaunchAtLogin(Bool)
@@ -154,6 +163,7 @@ struct AppFeature {
                 guard !state.isReadmeDemo else { return .none }
                 state.$appRulesStore.withLock { $0.migrateIfNeeded() }
                 state.$fallbackRuleStore.withLock { $0.migrateIfNeeded() }
+                state.$exclusionsStore.withLock { $0.migrateIfNeeded() }
                 state.appAvailability = appAvailabilityClient.snapshot(for: state.appRules.values)
                 normalizeFallbackRule(in: &state)
                 let initialSwitchingEffect = reduceSwitching(.loadInitialState, state: &state)
@@ -215,6 +225,9 @@ struct AppFeature {
                     updatedRule.updatedAt = updateDate
                     store.rules[appInfo.bundleId] = updatedRule
                 }
+                state.$exclusionsStore.withLock {
+                    $0.setSwitchingExcluded(appInfo.bundleId, true)
+                }
                 return reduceSwitching(.applicationIgnored(bundleId: appInfo.bundleId), state: &state)
 
             case .view(.reloadInputMethodsTapped):
@@ -252,6 +265,7 @@ struct AppFeature {
 
             case .view(.restoreAllIgnoredAppsTapped):
                 let updateDate = now
+                var restoredBundleIds: [String] = []
                 state.$appRulesStore.withLock { store in
                     for bundleId in Array(store.rules.keys) {
                         guard var rule = store.rules[bundleId], rule.strategy == .ignored else {
@@ -261,6 +275,12 @@ struct AppFeature {
                         rule.strategyBeforeIgnoring = nil
                         rule.updatedAt = updateDate
                         store.rules[bundleId] = rule
+                        restoredBundleIds.append(bundleId)
+                    }
+                }
+                state.$exclusionsStore.withLock { store in
+                    for bundleId in restoredBundleIds {
+                        store.setSwitchingExcluded(bundleId, false)
                     }
                 }
                 return .none
@@ -275,6 +295,24 @@ struct AppFeature {
                     rule.strategyBeforeIgnoring = nil
                     rule.updatedAt = updateDate
                     store.rules[bundleId] = rule
+                }
+                state.$exclusionsStore.withLock {
+                    $0.setSwitchingExcluded(bundleId, false)
+                }
+                return .none
+
+            case .view(.setSwitchingExclusion(let bundleId, let excluded)):
+                state.$exclusionsStore.withLock {
+                    $0.setSwitchingExcluded(bundleId, excluded)
+                }
+                if excluded {
+                    return reduceSwitching(.applicationIgnored(bundleId: bundleId), state: &state)
+                }
+                return .none
+
+            case .view(.setIndicatorExclusion(let bundleId, let excluded)):
+                state.$exclusionsStore.withLock {
+                    $0.setIndicatorExcluded(bundleId, excluded)
                 }
                 return .none
 

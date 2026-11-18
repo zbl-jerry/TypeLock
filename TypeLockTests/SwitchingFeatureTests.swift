@@ -65,6 +65,40 @@ final class SwitchingFeatureTests: XCTestCase {
         XCTAssertEqual(switchedInputMethods, [targetInputMethod])
     }
 
+    func testSwitchingExclusionSkipsAutomaticSwitch() async {
+        let app = AppInfo(bundleId: "com.test.terminal", name: "Terminal", path: "/Applications/Terminal.app")
+        let inputMethod = InputMethod(id: "ime.en", name: "English")
+        let recorder = SwitchRecorder()
+
+        var initialState = makeState()
+        initialState.inputMethods = [inputMethod]
+        initialState.$appRulesStore.withLock {
+            $0.rules[app.bundleId] = makeRule(
+                app: app,
+                strategy: .fixed(inputMethodId: inputMethod.id)
+            )
+        }
+        initialState.$exclusionsStore.withLock {
+            $0.setSwitchingExcluded(app.bundleId, true)
+        }
+
+        let store = TestStore(initialState: initialState) {
+            SwitchingFeature()
+        }
+        store.dependencies.inputMethodClient.currentInputMethodId = { "ime.zh" }
+        store.dependencies.inputMethodClient.switchToInputMethod = { inputMethodId in
+            await recorder.record(inputMethodId)
+        }
+
+        await store.send(.applicationActivated(app)) {
+            $0.currentFrontmostBundleId = app.bundleId
+        }
+
+        let switchedInputMethods = await recorder.values
+        XCTAssertTrue(switchedInputMethods.isEmpty)
+        XCTAssertNil(store.state.pendingProgrammaticSwitch)
+    }
+
     func testLaunchedAppUsesLaunchStrategyOnFirstActivation() async {
         let app = AppInfo(bundleId: "com.test.editor", name: "Editor", path: "/Applications/Editor.app")
         let launchInputMethod = InputMethod(id: "ime.en", name: "English")

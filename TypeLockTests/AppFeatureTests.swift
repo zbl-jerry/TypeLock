@@ -319,6 +319,35 @@ final class AppFeatureTests: XCTestCase {
         )
     }
 
+    func testSetSwitchingAndIndicatorExclusionsAreIndependent() async {
+        let store = TestStore(initialState: AppFeature.State()) {
+            AppFeature()
+        }
+
+        await store.send(.view(.setSwitchingExclusion(
+            bundleId: "com.test.terminal",
+            excluded: true
+        ))) {
+            $0.$exclusionsStore.withLock {
+                $0.switchingBundleIds.insert("com.test.terminal")
+            }
+        }
+
+        await store.send(.view(.setIndicatorExclusion(
+            bundleId: "com.test.chat",
+            excluded: true
+        ))) {
+            $0.$exclusionsStore.withLock {
+                $0.indicatorBundleIds.insert("com.test.chat")
+            }
+        }
+
+        XCTAssertTrue(store.state.exclusions.isExcludedFromSwitching("com.test.terminal"))
+        XCTAssertFalse(store.state.exclusions.isExcludedFromIndicator("com.test.terminal"))
+        XCTAssertTrue(store.state.exclusions.isExcludedFromIndicator("com.test.chat"))
+        XCTAssertFalse(store.state.exclusions.isExcludedFromSwitching("com.test.chat"))
+    }
+
     func testSetFallbackLaunchStrategyAllowsFollowLast() async {
         var initialState = AppFeature.State()
         initialState.$fallbackRuleStore.withLock {
@@ -1329,6 +1358,9 @@ final class AppFeatureTests: XCTestCase {
                 rule.updatedAt = updateDate
                 $0.rules[app.bundleId] = rule
             }
+            $0.$exclusionsStore.withLock {
+                $0.switchingBundleIds.insert(app.bundleId)
+            }
         }
 
         await lookupGate.resumeFirst()
@@ -1887,6 +1919,9 @@ final class AppFeatureTests: XCTestCase {
                     rule.updatedAt = Date(timeIntervalSince1970: 20)
                     $0.rules[app.bundleId] = rule
                 }
+                $0.$exclusionsStore.withLock {
+                    $0.switchingBundleIds.insert(app.bundleId)
+                }
             }
 
             await store.send(.view(.ignoreAppTapped(app)))
@@ -1898,6 +1933,9 @@ final class AppFeatureTests: XCTestCase {
                     rule.strategyBeforeIgnoring = nil
                     rule.updatedAt = Date(timeIntervalSince1970: 20)
                     $0.rules[app.bundleId] = rule
+                }
+                $0.$exclusionsStore.withLock {
+                    $0.switchingBundleIds.remove(app.bundleId)
                 }
             }
 
@@ -1935,6 +1973,9 @@ final class AppFeatureTests: XCTestCase {
                 rule.strategy = .ignored
                 rule.updatedAt = Date(timeIntervalSince1970: 20)
                 $0.rules[bundleId] = rule
+            }
+            $0.$exclusionsStore.withLock {
+                $0.switchingBundleIds.insert(bundleId)
             }
         }
 
@@ -2022,6 +2063,9 @@ final class AppFeatureTests: XCTestCase {
                     updatedAt: Date(timeIntervalSince1970: 20)
                 )
             }
+            $0.$exclusionsStore.withLock {
+                $0.switchingBundleIds.insert(app.bundleId)
+            }
         }
 
         XCTAssertEqual(store.state.runningUnconfiguredMenuItems.map(\.bundleId), [app.bundleId])
@@ -2046,6 +2090,9 @@ final class AppFeatureTests: XCTestCase {
                 rule.strategyBeforeIgnoring = nil
                 rule.updatedAt = Date(timeIntervalSince1970: 20)
                 $0.rules[app.bundleId] = rule
+            }
+            $0.$exclusionsStore.withLock {
+                $0.switchingBundleIds.remove(app.bundleId)
             }
         }
 
