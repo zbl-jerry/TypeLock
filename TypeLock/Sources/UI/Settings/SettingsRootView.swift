@@ -647,6 +647,17 @@ private struct IndicatorSettingsPane: View {
         store.send(.view(.setIndicatorPreferences(draft)))
     }
 
+    private func spacingKey(_ spacing: IndicatorSpacing) -> LocalizedStringKey {
+        switch spacing {
+        case .none: "settings.indicator.spacing.none"
+        case .xs: "settings.indicator.spacing.xs"
+        case .s: "settings.indicator.spacing.s"
+        case .m: "settings.indicator.spacing.m"
+        case .l: "settings.indicator.spacing.l"
+        case .xl: "settings.indicator.spacing.xl"
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             SettingsRow {
@@ -712,6 +723,36 @@ private struct IndicatorSettingsPane: View {
                     Text("settings.indicator.cursor.above").tag(IndicatorCursorPosition.above)
                     Text("settings.indicator.cursor.below").tag(IndicatorCursorPosition.below)
                     Text("settings.indicator.cursor.right").tag(IndicatorCursorPosition.right)
+                }
+                .pickerStyle(.segmented)
+            }
+
+            SettingsRow {
+                Picker("settings.indicator.alignment", selection: Binding(
+                    get: { store.indicator.alignment },
+                    set: { value in update { $0.alignment = value } }
+                )) {
+                    Text("settings.indicator.alignment.top_left").tag(IndicatorAlignment.topLeft)
+                    Text("settings.indicator.alignment.top_center").tag(IndicatorAlignment.topCenter)
+                    Text("settings.indicator.alignment.top_right").tag(IndicatorAlignment.topRight)
+                    Text("settings.indicator.alignment.center_left").tag(IndicatorAlignment.centerLeft)
+                    Text("settings.indicator.alignment.center").tag(IndicatorAlignment.center)
+                    Text("settings.indicator.alignment.center_right").tag(IndicatorAlignment.centerRight)
+                    Text("settings.indicator.alignment.bottom_left").tag(IndicatorAlignment.bottomLeft)
+                    Text("settings.indicator.alignment.bottom_center").tag(IndicatorAlignment.bottomCenter)
+                    Text("settings.indicator.alignment.bottom_right").tag(IndicatorAlignment.bottomRight)
+                }
+                .pickerStyle(.menu)
+            }
+
+            SettingsRow {
+                Picker("settings.indicator.spacing", selection: Binding(
+                    get: { store.indicator.spacing },
+                    set: { value in update { $0.spacing = value } }
+                )) {
+                    ForEach(IndicatorSpacing.allCases) { spacing in
+                        Text(spacingKey(spacing)).tag(spacing)
+                    }
                 }
                 .pickerStyle(.segmented)
             }

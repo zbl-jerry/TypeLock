@@ -193,3 +193,22 @@
 "settings.hotkeys.recording" = "Press a shortcut…";
 "settings.hotkeys.clear" = "Clear";
 "settings.hotkeys.conflict" = "Shortcut already in use";
+
+// Indicator alignment and spacing
+"settings.indicator.alignment" = "Alignment";
+"settings.indicator.alignment.top_left" = "Top Left";
+"settings.indicator.alignment.top_center" = "Top Center";
+"settings.indicator.alignment.top_right" = "Top Right";
+"settings.indicator.alignment.center_left" = "Center Left";
+"settings.indicator.alignment.center" = "Center";
+"settings.indicator.alignment.center_right" = "Center Right";
+"settings.indicator.alignment.bottom_left" = "Bottom Left";
+"settings.indicator.alignment.bottom_center" = "Bottom Center";
+"settings.indicator.alignment.bottom_right" = "Bottom Right";
+"settings.indicator.spacing" = "Spacing";
+"settings.indicator.spacing.none" = "None";
+"settings.indicator.spacing.xs" = "XS";
+"settings.indicator.spacing.s" = "S";
+"settings.indicator.spacing.m" = "M";
+"settings.indicator.spacing.l" = "L";
+"settings.indicator.spacing.xl" = "XL";

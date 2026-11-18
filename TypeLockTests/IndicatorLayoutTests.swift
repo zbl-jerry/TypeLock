@@ -38,6 +38,33 @@ final class IndicatorLayoutTests: XCTestCase {
         XCTAssertEqual(bottomLeft, CGPoint(x: 8, y: 8))
     }
 
+    func testAlignmentPlacesIndicatorAtScreenPositions() {
+        let expected: [(IndicatorAlignment, CGPoint)] = [
+            (.topLeft, CGPoint(x: 8, y: 760)),
+            (.topCenter, CGPoint(x: 440, y: 760)),
+            (.topRight, CGPoint(x: 872, y: 760)),
+            (.centerLeft, CGPoint(x: 8, y: 384)),
+            (.center, CGPoint(x: 440, y: 384)),
+            (.centerRight, CGPoint(x: 872, y: 384)),
+            (.bottomLeft, CGPoint(x: 8, y: 8)),
+            (.bottomCenter, CGPoint(x: 440, y: 8)),
+            (.bottomRight, CGPoint(x: 872, y: 8)),
+        ]
+
+        for (alignment, point) in expected {
+            XCTAssertEqual(
+                IndicatorLayout.screenPoint(
+                    frame: screen,
+                    size: size,
+                    alignment: alignment,
+                    spacing: IndicatorSpacing.s.points
+                ),
+                point,
+                "Unexpected position for \(alignment)"
+            )
+        }
+    }
+
     func testCaretPositions() {
         let caret = CGRect(x: 400, y: 300, width: 2, height: 18)
 

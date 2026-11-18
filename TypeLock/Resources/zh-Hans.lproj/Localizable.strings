@@ -193,3 +193,22 @@
 "settings.hotkeys.recording" = "按下快捷键…";
 "settings.hotkeys.clear" = "清除";
 "settings.hotkeys.conflict" = "快捷键已被占用";
+
+// 提示位置与间距
+"settings.indicator.alignment" = "对齐位置";
+"settings.indicator.alignment.top_left" = "左上";
+"settings.indicator.alignment.top_center" = "上中";
+"settings.indicator.alignment.top_right" = "右上";
+"settings.indicator.alignment.center_left" = "左中";
+"settings.indicator.alignment.center" = "居中";
+"settings.indicator.alignment.center_right" = "右中";
+"settings.indicator.alignment.bottom_left" = "左下";
+"settings.indicator.alignment.bottom_center" = "下中";
+"settings.indicator.alignment.bottom_right" = "右下";
+"settings.indicator.spacing" = "间距";
+"settings.indicator.spacing.none" = "无";
+"settings.indicator.spacing.xs" = "XS";
+"settings.indicator.spacing.s" = "S";
+"settings.indicator.spacing.m" = "M";
+"settings.indicator.spacing.l" = "L";
+"settings.indicator.spacing.xl" = "XL";
