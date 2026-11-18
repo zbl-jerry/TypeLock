@@ -15,7 +15,7 @@ final class IndicatorWindowController {
     private init() {}
 
     func show(inputMethodName: String, preferences: IndicatorPreferences) {
-        guard preferences.enabled, !preferences.onlyAtCursor else { return }
+        guard preferences.enabled else { return }
 
         hideTask?.cancel()
 
@@ -33,12 +33,23 @@ final class IndicatorWindowController {
             width: max(measured.width, 44),
             height: max(measured.height, 28)
         )
+        let mouse = NSEvent.mouseLocation
+        let screenFrame = activeScreenFrame(mouse: mouse)
+        guard let origin = IndicatorLayout.origin(
+            caret: CaretLocator.currentCaretRect(),
+            size: size,
+            preferences: preferences,
+            screenFrame: screenFrame,
+            mouse: mouse
+        ) else {
+            return
+        }
 
         let panel = panel ?? makePanel()
         self.panel = panel
         panel.contentView = hostingView
         panel.setContentSize(size)
-        panel.setFrameOrigin(origin(for: size, preferences: preferences))
+        panel.setFrameOrigin(origin)
         panel.alphaValue = 1
         panel.orderFrontRegardless()
 
@@ -82,24 +93,10 @@ final class IndicatorWindowController {
         return panel
     }
 
-    private func origin(for size: CGSize, preferences: IndicatorPreferences) -> CGPoint {
-        switch preferences.position {
-        case .screen:
-            let frame = (NSScreen.main ?? NSScreen.screens.first)?.visibleFrame ?? .zero
-            return CGPoint(
-                x: frame.midX - size.width / 2,
-                y: frame.midY - size.height / 2
-            )
-        case .mouse:
-            let mouse = NSEvent.mouseLocation
-            let frame = NSScreen.screens.first(where: { $0.frame.contains(mouse) })?.visibleFrame
-                ?? NSScreen.main?.visibleFrame
-                ?? .zero
-            let proposed = CGPoint(x: mouse.x + 12, y: mouse.y + 12)
-            return CGPoint(
-                x: min(max(proposed.x, frame.minX + 8), frame.maxX - size.width - 8),
-                y: min(max(proposed.y, frame.minY + 8), frame.maxY - size.height - 8)
-            )
-        }
+    private func activeScreenFrame(mouse: CGPoint) -> CGRect {
+        let screen = NSScreen.screens.first(where: { $0.frame.contains(mouse) })
+            ?? NSScreen.main
+            ?? NSScreen.screens.first
+        return screen?.visibleFrame ?? .zero
     }
 }
