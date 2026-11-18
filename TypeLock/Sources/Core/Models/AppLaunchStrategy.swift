@@ -17,7 +17,7 @@ extension AppLaunchStrategy {
         case .inherit:
             return nil
         case .none:
-            return .none
+            return InputMethodStrategy.none
         case let .fixed(inputMethodId):
             return .fixed(inputMethodId: inputMethodId)
         case let .followLast(lastInputMethodId):

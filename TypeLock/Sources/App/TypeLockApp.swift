@@ -95,6 +95,10 @@ struct TypeLockApp: App {
             MenuBarIconView(store: store)
         }
         .menuBarExtraStyle(.menu)
+
+        Settings {
+            SettingsRootView(store: store)
+        }
     }
 }
 
