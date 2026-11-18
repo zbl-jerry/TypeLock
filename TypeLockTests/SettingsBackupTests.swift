@@ -140,7 +140,7 @@ final class SettingsBackupTests: XCTestCase {
 
     func testRejectsUnsupportedSchemaVersion() {
         let data = Data(
-            #"{"schemaVersion":99,"exportedAt":"1970-01-01T00:00:00Z","appVersion":"1","buildVersion":"1","appRules":{},"fallbackRule":{"v":2,"strategy":{"none":{}},"launchStrategy":{"none":{}}}}"#.utf8
+            #"{"schemaVersion":99,"exportedAt":0,"appVersion":"1","buildVersion":"1","appRules":{},"fallbackRule":{"v":2,"strategy":{"none":{}},"launchStrategy":{"none":{}}}}"#.utf8
         )
 
         XCTAssertThrowsError(try SettingsBackupService.decode(data)) { error in

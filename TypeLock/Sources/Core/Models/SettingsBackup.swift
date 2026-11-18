@@ -87,17 +87,50 @@ struct SettingsBackup: Codable, Equatable, Sendable {
         terminalRulesStore: TerminalRulesStore? = nil
     ) {
         schemaVersion = Self.currentSchemaVersion
-        self.exportedAt = exportedAt
+        self.exportedAt = Self.normalized(exportedAt)
         self.appVersion = appVersion
         self.buildVersion = buildVersion
-        appRules = appRulesStore.rules
+        appRules = appRulesStore.rules.mapValues(Self.normalized)
         fallbackRule = fallbackRuleStore
         self.statistics = includeStatistics ? statistics.counts : nil
         exclusions = exclusionsStore
         self.indicatorPreferences = indicatorPreferences
         hotkeys = hotkeyPreferences
-        browserRules = browserRulesStore
-        terminalRules = terminalRulesStore
+        browserRules = browserRulesStore.map(Self.normalized)
+        terminalRules = terminalRulesStore.map(Self.normalized)
+    }
+
+    private static func normalized(_ date: Date) -> Date {
+        Date(timeIntervalSince1970: date.timeIntervalSince1970.rounded())
+    }
+
+    private static func normalized(_ rule: AppRuleRecord) -> AppRuleRecord {
+        var copy = rule
+        copy.createdAt = normalized(copy.createdAt)
+        copy.updatedAt = normalized(copy.updatedAt)
+        return copy
+    }
+
+    private static func normalized(_ store: BrowserRulesStore) -> BrowserRulesStore {
+        var copy = store
+        copy.rules = copy.rules.map { rule in
+            var rule = rule
+            rule.createdAt = normalized(rule.createdAt)
+            rule.updatedAt = normalized(rule.updatedAt)
+            return rule
+        }
+        return copy
+    }
+
+    private static func normalized(_ store: TerminalRulesStore) -> TerminalRulesStore {
+        var copy = store
+        copy.rules = copy.rules.map { rule in
+            var rule = rule
+            rule.createdAt = normalized(rule.createdAt)
+            rule.updatedAt = normalized(rule.updatedAt)
+            return rule
+        }
+        return copy
     }
 
     func validate() throws {
@@ -211,13 +244,13 @@ enum SettingsBackupService {
     static func encode(_ backup: SettingsBackup) throws -> Data {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        encoder.dateEncodingStrategy = .iso8601
+        encoder.dateEncodingStrategy = .secondsSince1970
         return try encoder.encode(backup)
     }
 
     static func decode(_ data: Data) throws -> SettingsBackup {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        decoder.dateDecodingStrategy = .secondsSince1970
         let backup = try decoder.decode(SettingsBackup.self, from: data)
         try backup.validate()
         return backup
