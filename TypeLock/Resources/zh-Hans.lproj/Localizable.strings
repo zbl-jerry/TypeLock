@@ -248,3 +248,6 @@
 "settings.indicator.background_hex" = "背景色 #RRGGBB";
 "settings.indicator.text_hex" = "文字色 #RRGGBB";
 "settings.indicator.reset_colors" = "清除颜色";
+
+"settings.reliability.cursor_lag_fix" = "修复输入/光标卡顿";
+"settings.reliability.cursor_lag_fix.description" = "关闭 macOS 14 的实验性文本光标，需要管理员授权；可能需要重新启动相关应用。";

@@ -1222,6 +1222,7 @@ private struct TroubleshootingSettingsPane: View {
 
     @State private var accessibility = PermissionService.accessibilityStatus
     @State private var inputMonitoring = PermissionService.inputMonitoringStatus
+    @State private var cursorLagMessage: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -1260,6 +1261,36 @@ private struct TroubleshootingSettingsPane: View {
                     }
                 ))
                 .toggleStyle(.switch)
+            }
+
+            SettingsRow {
+                Toggle("settings.reliability.cursor_lag_fix", isOn: Binding(
+                    get: { store.reliability.cursorLagFixEnabled },
+                    set: { value in
+                        do {
+                            try CursorLagFixService.setEnabled(value)
+                            var preferences = store.reliability
+                            preferences.cursorLagFixEnabled = value
+                            store.send(.view(.setReliabilityPreferences(preferences)))
+                            cursorLagMessage = nil
+                        } catch {
+                            cursorLagMessage = error.localizedDescription
+                        }
+                    }
+                ))
+                .toggleStyle(.switch)
+            }
+
+            SettingsRow {
+                Text("settings.reliability.cursor_lag_fix.description")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let cursorLagMessage {
+                SettingsHint {
+                    Text(cursorLagMessage)
+                }
             }
 
             SettingsRow {

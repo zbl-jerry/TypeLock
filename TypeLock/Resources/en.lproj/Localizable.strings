@@ -248,3 +248,6 @@
 "settings.indicator.background_hex" = "Background #RRGGBB";
 "settings.indicator.text_hex" = "Text #RRGGBB";
 "settings.indicator.reset_colors" = "Clear Colors";
+
+"settings.reliability.cursor_lag_fix" = "Fix Typing/Cursor Lag";
+"settings.reliability.cursor_lag_fix.description" = "Disables the macOS 14 experimental text cursor. Requires administrator approval; affected apps may need a restart.";
