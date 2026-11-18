@@ -55,7 +55,52 @@ final class AppStorageCompatibilityTests: XCTestCase {
         let rule = try JSONDecoder().decode(AppRuleRecord.self, from: data)
 
         XCTAssertEqual(rule.strategy, .ignored)
+        XCTAssertEqual(rule.activationStrategy, .ignored)
         XCTAssertNil(rule.strategyBeforeIgnoring)
+        XCTAssertEqual(rule.launchStrategy, .inherit)
+    }
+
+    func testLaunchStrategyRoundTripsAndDoesNotChangeActivationStrategy() throws {
+        let rule = AppRuleRecord(
+            bundleId: "com.test.editor",
+            lastKnownPath: "/Applications/Editor.app",
+            lastKnownName: "Editor",
+            strategy: .fixed(inputMethodId: "ime.zh"),
+            launchStrategy: .fixed(inputMethodId: "ime.abc"),
+            createdAt: Date(timeIntervalSince1970: 10),
+            updatedAt: Date(timeIntervalSince1970: 20)
+        )
+
+        let data = try JSONEncoder().encode(rule)
+        let decoded = try JSONDecoder().decode(AppRuleRecord.self, from: data)
+
+        XCTAssertEqual(decoded, rule)
+        XCTAssertEqual(decoded.activationStrategy, .fixed(inputMethodId: "ime.zh"))
+        XCTAssertEqual(decoded.launchStrategy, .fixed(inputMethodId: "ime.abc"))
+    }
+
+    func testLegacyRulesStoreMigratesToCurrentVersion() throws {
+        let legacy = Data(
+            #"{"v":1,"rules":{"com.test.notes":{"bundleId":"com.test.notes","lastKnownName":"Notes","strategy":{"none":{}},"createdAt":0,"updatedAt":0}}}"#.utf8
+        )
+        var store = try JSONDecoder().decode(AppRulesStore.self, from: legacy)
+
+        XCTAssertEqual(store.v, 1)
+        XCTAssertEqual(store.rules["com.test.notes"]?.launchStrategy, .inherit)
+
+        store.migrateIfNeeded()
+
+        XCTAssertEqual(store.v, MigrationVersion.current)
+        XCTAssertEqual(store.rules["com.test.notes"]?.launchStrategy, .inherit)
+    }
+
+    func testFallbackRuleStoreMigratesToCurrentVersion() {
+        var store = FallbackRuleStore(v: 1, strategy: .fixed(inputMethodId: "ime.abc"))
+
+        store.migrateIfNeeded()
+
+        XCTAssertEqual(store.v, MigrationVersion.current)
+        XCTAssertEqual(store.strategy, .fixed(inputMethodId: "ime.abc"))
     }
 
     func testExistingInputMethodStrategiesStillDecode() throws {

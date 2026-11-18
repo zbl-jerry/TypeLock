@@ -31,6 +31,14 @@ struct AppRulesStore: Codable, Hashable, Sendable {
         existingRule.updatedAt = date
         rules[appInfo.bundleId] = existingRule
     }
+
+    /// Version 2 adds `launchStrategy`, which decodes as `.inherit` for legacy
+    /// records. Bumping the stored version makes the upgrade explicit and
+    /// prevents the migration from running again.
+    mutating func migrateIfNeeded() {
+        guard v < MigrationVersion.current else { return }
+        v = MigrationVersion.current
+    }
 }
 
 struct FallbackRuleStore: Codable, Hashable, Sendable {
@@ -40,5 +48,10 @@ struct FallbackRuleStore: Codable, Hashable, Sendable {
     init(v: Int = MigrationVersion.current, strategy: InputMethodStrategy = .none) {
         self.v = v
         self.strategy = strategy
+    }
+
+    mutating func migrateIfNeeded() {
+        guard v < MigrationVersion.current else { return }
+        v = MigrationVersion.current
     }
 }

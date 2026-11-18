@@ -104,12 +104,7 @@ struct SwitchingFeature {
         }
 
         var fallbackStrategy: InputMethodStrategy {
-            switch fallbackRuleStore.strategy {
-            case .followLast, .ignored:
-                return .none
-            case .none, .fixed:
-                return fallbackRuleStore.strategy
-            }
+            SwitchResolver.normalizedFallback(fallbackRuleStore.strategy)
         }
 
         func isCurrentTarget(_ attempt: LastSwitchAttempt) -> Bool {
@@ -443,9 +438,12 @@ struct SwitchingFeature {
     }
 
     private func resolveSwitchTarget(for bundleId: String, state: State) -> SwitchTargetResolution {
-        let appStrategy = state.strategy(for: bundleId)
-        let strategy = appStrategy == .none ? state.fallbackStrategy : appStrategy
-        let ruleSource: State.RuleSource = appStrategy == .none ? .fallback : .app
+        let resolution = SwitchResolver.resolveActivation(
+            appStrategy: state.strategy(for: bundleId),
+            fallbackStrategy: state.fallbackRuleStore.strategy
+        )
+        let strategy = resolution.strategy
+        let ruleSource: State.RuleSource = resolution.source == .app ? .app : .fallback
         let candidateId: String?
 
         switch strategy {

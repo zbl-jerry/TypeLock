@@ -97,12 +97,16 @@ test: check-tuist
         CODE_SIGNING_ALLOWED=NO \
         CODE_SIGNING_REQUIRED=NO
 
-# Test release verification and Homebrew update scripts.
+# Test release verification scripts.
 test-release-scripts:
     script/test_release_scripts.sh
 
+# Test the GPL/AGPL license guard.
+test-license-checks:
+    script/test_license_checks.sh
+
 # Run the same formatting and test checks required by pull requests.
-check: lint test test-release-scripts
+check: lint test test-release-scripts test-license-checks
 
 [private]
 check-swiftformat:

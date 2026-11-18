@@ -1,0 +1,6 @@
+# Dependency identities or URL fragments that must not appear in Package.resolved.
+# Add one substring per line. Lines starting with # are ignored.
+#
+# Examples:
+#   gnuplot
+#   some-agpl-library

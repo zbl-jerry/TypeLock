@@ -287,11 +287,15 @@ fi
 assert_contains "$PR_WORKFLOW" 'release-scripts:'
 assert_contains "$PR_WORKFLOW" 'run: actionlint .github/workflows/*.yml'
 assert_contains "$PR_WORKFLOW" 'run: script/test_release_scripts.sh'
+assert_contains "$PR_WORKFLOW" 'run: script/test_license_checks.sh'
+assert_contains "$PR_WORKFLOW" 'run: script/check_licenses.sh'
 assert_contains "$BUILD_WORKFLOW" 'workflow_dispatch:'
 assert_contains "$BUILD_WORKFLOW" '- dev'
 assert_contains "$BUILD_WORKFLOW" 'TypeLock.xcodeproj'
 assert_contains "$BUILD_WORKFLOW" 'TypeLock-macOS-universal.zip'
 assert_contains "$BUILD_WORKFLOW" 'actions/upload-artifact@v7'
+assert_contains "$BUILD_WORKFLOW" 'run: script/check_licenses.sh'
+assert_contains "$WORKFLOW" 'run: script/check_licenses.sh'
 assert_contains "$JUSTFILE" 'test-release-scripts:'
 
 echo "Release script tests passed."

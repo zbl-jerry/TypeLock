@@ -149,6 +149,8 @@ struct AppFeature {
 
             case .task:
                 guard !state.isReadmeDemo else { return .none }
+                state.$appRulesStore.withLock { $0.migrateIfNeeded() }
+                state.$fallbackRuleStore.withLock { $0.migrateIfNeeded() }
                 state.appAvailability = appAvailabilityClient.snapshot(for: state.appRules.values)
                 normalizeFallbackRule(in: &state)
                 let initialSwitchingEffect = reduceSwitching(.loadInitialState, state: &state)
