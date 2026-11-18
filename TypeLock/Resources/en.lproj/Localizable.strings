@@ -232,3 +232,10 @@
 "settings.terminal.empty" = "No terminal rules";
 "settings.terminal.program" = "Program, e.g. nvim";
 "settings.terminal.invalid" = "Enter a program name";
+
+// Input source reliability
+"settings.reliability.cjkv_fix" = "Fix Input Source Switching";
+"settings.reliability.cjkv_fix.description" = "Briefly changes focus after a switch so macOS settles the actual input source.";
+
+// Update channel
+"settings.about.beta_updates" = "Receive Beta Updates";

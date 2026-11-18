@@ -59,6 +59,10 @@ extension AppFeature.State {
         terminalRulesStore
     }
 
+    var reliability: ReliabilityPreferences {
+        reliabilityPreferences
+    }
+
     var menuBarIconSystemName: String {
         if inputMethodDiagnostic != nil {
             return "exclamationmark.triangle"

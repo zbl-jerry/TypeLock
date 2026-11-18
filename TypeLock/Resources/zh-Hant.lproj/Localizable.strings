@@ -232,3 +232,10 @@
 "settings.terminal.empty" = "尚無終端機規則";
 "settings.terminal.program" = "程式名稱，例如 nvim";
 "settings.terminal.invalid" = "請輸入程式名稱";
+
+// 輸入法可靠性
+"settings.reliability.cjkv_fix" = "修復輸入法切換問題";
+"settings.reliability.cjkv_fix.description" = "切換後短暫改變焦點，讓系統落定實際輸入法。";
+
+// 更新通道
+"settings.about.beta_updates" = "接收 Beta 更新";

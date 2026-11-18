@@ -8,6 +8,7 @@ struct SwitchingFeature {
     @Dependency(\.browserURLClient) var browserURLClient
     @Dependency(\.date.now) var now
     @Dependency(\.indicatorClient) var indicatorClient
+    @Dependency(\.reliabilityClient) var reliabilityClient
     @Dependency(\.terminalProgramClient) var terminalProgramClient
     @Dependency(\.inputMethodClient) var inputMethodClient
     @Dependency(\.workspaceClient) var workspaceClient
@@ -76,6 +77,7 @@ struct SwitchingFeature {
         @Shared var indicatorPreferences: IndicatorPreferences
         @Shared var browserRulesStore: BrowserRulesStore
         @Shared var terminalRulesStore: TerminalRulesStore
+        @Shared var reliabilityPreferences: ReliabilityPreferences
         var currentFrontmostBundleId: String?
         var inputMethodCatalogStatus: InputMethodCatalogStatus = .loading
         var inputMethods: [InputMethod] = []
@@ -109,6 +111,10 @@ struct SwitchingFeature {
                 wrappedValue: TerminalRulesStore(),
                 .fileStorage(.terminalRulesURL)
             ),
+            reliabilityPreferences: Shared<ReliabilityPreferences> = Shared(
+                wrappedValue: ReliabilityPreferences(),
+                .fileStorage(.reliabilityPreferencesURL)
+            ),
             currentFrontmostBundleId: String? = nil,
             inputMethodCatalogStatus: InputMethodCatalogStatus = .loading,
             inputMethods: [InputMethod] = [],
@@ -121,6 +127,7 @@ struct SwitchingFeature {
             self._indicatorPreferences = indicatorPreferences
             self._browserRulesStore = browserRulesStore
             self._terminalRulesStore = terminalRulesStore
+            self._reliabilityPreferences = reliabilityPreferences
             self.currentFrontmostBundleId = currentFrontmostBundleId
             self.inputMethodCatalogStatus = inputMethodCatalogStatus
             self.inputMethods = inputMethods
@@ -331,6 +338,9 @@ struct SwitchingFeature {
                 if resolvedOutcome == .switched {
                     state.$appSwitchStatisticsStore.withLock { store in
                         store.counts[pendingSwitch.bundleId, default: 0] += 1
+                    }
+                    if state.reliabilityPreferences.cjkvFixEnabled {
+                        reliabilityClient.settleFocus()
                     }
                 }
 

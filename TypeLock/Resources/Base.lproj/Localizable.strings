@@ -232,3 +232,10 @@
 "settings.terminal.empty" = "暂无终端规则";
 "settings.terminal.program" = "程序名，例如 nvim";
 "settings.terminal.invalid" = "请输入程序名";
+
+// 输入法可靠性
+"settings.reliability.cjkv_fix" = "修复输入法切换问题";
+"settings.reliability.cjkv_fix.description" = "切换后短暂改变焦点，让系统落定实际输入法。";
+
+// 更新通道
+"settings.about.beta_updates" = "接收 Beta 更新";

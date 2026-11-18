@@ -9,6 +9,7 @@ enum AppStorageConfiguration {
     static let hotkeyPreferencesFilename = "hotkeys.json"
     static let browserRulesFilename = "browser-rules.json"
     static let terminalRulesFilename = "terminal-rules.json"
+    static let reliabilityPreferencesFilename = "reliability.json"
 
     private final class BundleLocator {}
 
@@ -122,5 +123,17 @@ extension URL {
     }
 
     static let browserRulesURL = browserRulesFileURL()
+    static func reliabilityPreferencesFileURL(
+        applicationSupportDirectory: URL = .applicationSupportDirectory,
+        bundleIdentifier: String = AppStorageConfiguration.bundleIdentifier
+    ) -> URL {
+        appStorageDirectoryURL(
+            applicationSupportDirectory: applicationSupportDirectory,
+            bundleIdentifier: bundleIdentifier
+        )
+        .appending(path: AppStorageConfiguration.reliabilityPreferencesFilename)
+    }
+
     static let terminalRulesURL = terminalRulesFileURL()
+    static let reliabilityPreferencesURL = reliabilityPreferencesFileURL()
 }

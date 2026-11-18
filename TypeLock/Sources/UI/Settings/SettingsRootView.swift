@@ -41,7 +41,7 @@ struct SettingsRootView: View {
                     case .exclusions:
                         ExclusionsSettingsPane(store: store)
                     case .troubleshooting:
-                        TroubleshootingSettingsPane()
+                        TroubleshootingSettingsPane(store: store)
                     case .about:
                         AboutSettingsPane()
                     default:
@@ -1131,6 +1131,8 @@ private struct ExclusionSection: View {
 }
 
 private struct TroubleshootingSettingsPane: View {
+    let store: StoreOf<AppFeature>
+
     @State private var accessibility = PermissionService.accessibilityStatus
     @State private var inputMonitoring = PermissionService.inputMonitoringStatus
 
@@ -1158,6 +1160,24 @@ private struct TroubleshootingSettingsPane: View {
                 Text("settings.permissions.terminal")
                 Spacer()
                 Text("settings.permissions.terminal.pending")
+                    .foregroundStyle(.secondary)
+            }
+
+            SettingsRow {
+                Toggle("settings.reliability.cjkv_fix", isOn: Binding(
+                    get: { store.reliability.cjkvFixEnabled },
+                    set: { value in
+                        var preferences = store.reliability
+                        preferences.cjkvFixEnabled = value
+                        store.send(.view(.setReliabilityPreferences(preferences)))
+                    }
+                ))
+                .toggleStyle(.switch)
+            }
+
+            SettingsRow {
+                Text("settings.reliability.cjkv_fix.description")
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
             }
 
@@ -1199,6 +1219,8 @@ private struct PermissionRow: View {
 }
 
 private struct AboutSettingsPane: View {
+    @AppStorage(UpdateChannelPreferences.receivesBetaUpdatesKey) private var receivesBetaUpdates = false
+
     private var version: String {
         let short = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
@@ -1212,6 +1234,11 @@ private struct AboutSettingsPane: View {
                 Spacer()
                 Text(version)
                     .foregroundStyle(.secondary)
+            }
+
+            SettingsRow {
+                Toggle("settings.about.beta_updates", isOn: $receivesBetaUpdates)
+                    .toggleStyle(.switch)
             }
 
             SettingsRow {
