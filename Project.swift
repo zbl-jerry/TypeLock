@@ -12,12 +12,12 @@ let project = Project(
         developmentRegion: "zh-Hans"
     ),
     packages: [
-        .remote(url: "https://github.com/pointfreeco/swift-case-paths", requirement: .upToNextMajor(from: "1.8.0")),
-        .remote(url: "https://github.com/pointfreeco/swift-composable-architecture", requirement: .upToNextMajor(from: "1.26.0")),
-        .remote(url: "https://github.com/pointfreeco/swift-dependencies", requirement: .upToNextMajor(from: "1.14.1")),
-        .remote(url: "https://github.com/pointfreeco/swift-perception", requirement: .upToNextMajor(from: "2.0.10")),
-        .remote(url: "https://github.com/pointfreeco/swift-sharing", requirement: .upToNextMajor(from: "2.9.1")),
-        .remote(url: "https://github.com/sparkle-project/Sparkle", requirement: .upToNextMajor(from: "2.9.4")),
+        .remote(url: "https://github.com/pointfreeco/swift-case-paths", requirement: .exact("1.8.0")),
+        .remote(url: "https://github.com/pointfreeco/swift-composable-architecture", requirement: .exact("1.26.0")),
+        .remote(url: "https://github.com/pointfreeco/swift-dependencies", requirement: .exact("1.12.0")),
+        .remote(url: "https://github.com/pointfreeco/swift-perception", requirement: .exact("2.0.10")),
+        .remote(url: "https://github.com/pointfreeco/swift-sharing", requirement: .exact("2.9.1")),
+        .remote(url: "https://github.com/sparkle-project/Sparkle", requirement: .exact("2.9.4")),
     ],
     settings: .settings(
         base: [

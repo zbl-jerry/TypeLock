@@ -35,7 +35,7 @@
 - **Truly native.** TypeLock's app business code is written in Swift and built with SwiftUI and The Composable Architecture (TCA). It uses `MenuBarExtra` and `LSUIElement` instead of an Electron runtime or embedded WebView.
 - **Focused and lightweight.** TypeLock runs as a menu bar utility without shipping a browser engine or server component. App rules, the default rule, and switch statistics stay on your Mac.
 - **At home on macOS.** The interface follows Light and Dark Mode automatically. On macOS 26, native SwiftUI controls use the system-provided Liquid Glass appearance where appropriate, while macOS 14 and macOS 15 retain their native system styling. TypeLock does not simulate Liquid Glass with custom visual effects.
-- **Built for modern Macs.** The release workflow uses Xcode 26.5 and verifies every release as a Universal Binary for both Apple Silicon and Intel Macs.
+- **Built for modern Macs.** The release workflow uses Xcode 26.3 and verifies every release as a Universal Binary for both Apple Silicon and Intel Macs.
 
 ## 💻 System Requirements
 
@@ -89,7 +89,7 @@ This project uses:
 
 ### Requirements
 
-- Xcode 26.5+
+- Xcode 26.3+
 - Swift 5.9+
 - macOS 14.0+
 - [just](https://github.com/casey/just)

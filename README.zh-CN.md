@@ -35,7 +35,7 @@
 - **真正原生。** TypeLock 的 App 业务代码使用 Swift 编写，并采用 SwiftUI 和 The Composable Architecture（TCA）架构。它基于 `MenuBarExtra` 与 `LSUIElement` 构建，不包含 Electron 运行时，也没有嵌入 WebView。
 - **专注且轻量。** TypeLock 作为菜单栏工具运行，无需附带浏览器引擎或服务端组件。App 规则、默认规则和切换统计都保存在你的 Mac 上。
 - **自然融入 macOS。** 界面会自动适配浅色与暗色模式。在 macOS 26 上，原生 SwiftUI 控件会在适用位置呈现系统提供的 Liquid Glass 外观；macOS 14 与 macOS 15 则保持各自的原生系统样式。TypeLock 不使用自定义视觉效果模拟 Liquid Glass。
-- **同时支持新旧 Mac。** Release workflow 使用 Xcode 26.5，并验证每个发布版本都是同时支持 Apple Silicon 与 Intel Mac 的 Universal Binary。
+- **同时支持新旧 Mac。** Release workflow 使用 Xcode 26.3，并验证每个发布版本都是同时支持 Apple Silicon 与 Intel Mac 的 Universal Binary。
 
 ## 💻 系统要求
 
@@ -89,7 +89,7 @@ TypeLock 以 Universal Binary `.zip` 的形式从 [GitHub Releases](https://gith
 
 ### 环境要求
 
-- Xcode 26.5+
+- Xcode 26.3+
 - Swift 5.9+
 - macOS 14.0+
 - [just](https://github.com/casey/just)
