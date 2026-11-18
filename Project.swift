@@ -68,6 +68,16 @@ let project = Project(
             sources: ["TypeLock/Sources/**"],
             resources: ["TypeLock/Resources/**"],
             entitlements: .file(path: "Tuist/Signing/TypeLock.entitlements"),
+            scripts: [
+                .post(
+                    script: """
+                    mkdir -p "${TARGET_BUILD_DIR}/${CONTENTS_FOLDER_PATH}/Helpers"
+                    cp "${BUILT_PRODUCTS_DIR}/TypeLockCursorHelper" "${TARGET_BUILD_DIR}/${CONTENTS_FOLDER_PATH}/Helpers/TypeLockCursorHelper"
+                    """,
+                    name: "Embed Cursor Helper",
+                    basedOnDependencyAnalysis: false
+                ),
+            ],
             dependencies: [
                 .package(product: "CasePaths"),
                 .package(product: "ComposableArchitecture"),
@@ -75,6 +85,7 @@ let project = Project(
                 .package(product: "PerceptionCore"),
                 .package(product: "Sharing"),
                 .package(product: "Sparkle"),
+                .target(name: "TypeLockCursorHelper"),
             ],
             settings: .settings(
                 base: [
@@ -84,6 +95,24 @@ let project = Project(
                     "ENABLE_MACROS": "YES",
                     "SWIFT_MACRO_DEBUGGING": "YES",
                     "SWIFT_MACRO_EXPANSION": "YES",
+                ],
+                configurations: [
+                    .debug(name: "Debug"),
+                    .release(name: "Release"),
+                ]
+            )
+        ),
+        .target(
+            name: "TypeLockCursorHelper",
+            destinations: .macOS,
+            product: .commandLineTool,
+            bundleId: "io.github.zbl-jerry.TypeLock.CursorHelper",
+            deploymentTargets: .macOS("14.0"),
+            infoPlist: .default,
+            sources: ["TypeLockCursorHelper/**"],
+            settings: .settings(
+                base: [
+                    "SWIFT_VERSION": "5.9",
                 ],
                 configurations: [
                     .debug(name: "Debug"),

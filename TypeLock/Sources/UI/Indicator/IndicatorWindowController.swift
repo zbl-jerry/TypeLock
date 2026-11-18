@@ -57,7 +57,7 @@ final class IndicatorWindowController {
                         inputMethodId: inputMethod.id,
                         inputMethodName: inputMethod.name,
                         preferences: current,
-                        caret: CaretLocator.currentCaretRect(),
+                        caret: CaretLocator.currentCaretRect(useHelper: false),
                         autoHide: false
                     )
                 } else {

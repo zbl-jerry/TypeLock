@@ -8,7 +8,16 @@ import Foundation
 /// not expose bounds; callers fall back to mouse/screen placement.
 @MainActor
 enum CaretLocator {
-    static func currentCaretRect() -> CGRect? {
+    static func currentCaretRect(useHelper: Bool = true) -> CGRect? {
+        if let direct = directCaretRect() {
+            return direct
+        }
+
+        guard useHelper else { return nil }
+        return CursorHelperClient.caretRect()
+    }
+
+    private static func directCaretRect() -> CGRect? {
         guard PermissionService.accessibilityStatus == .granted else { return nil }
 
         let systemWide = AXUIElementCreateSystemWide()
