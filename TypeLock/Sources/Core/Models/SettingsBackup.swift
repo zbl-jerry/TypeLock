@@ -32,6 +32,7 @@ struct SettingsImportPayload: Equatable, Sendable {
     let exclusionsStore: ExclusionsStore
     let indicatorPreferences: IndicatorPreferences
     let hotkeyPreferences: HotkeyPreferences
+    let browserRulesStore: BrowserRulesStore
 
     init(
         appRulesStore: AppRulesStore,
@@ -39,7 +40,8 @@ struct SettingsImportPayload: Equatable, Sendable {
         appSwitchStatisticsStore: AppSwitchStatisticsStore,
         exclusionsStore: ExclusionsStore = ExclusionsStore(),
         indicatorPreferences: IndicatorPreferences = IndicatorPreferences(),
-        hotkeyPreferences: HotkeyPreferences = HotkeyPreferences()
+        hotkeyPreferences: HotkeyPreferences = HotkeyPreferences(),
+        browserRulesStore: BrowserRulesStore = BrowserRulesStore()
     ) {
         self.appRulesStore = appRulesStore
         self.fallbackRuleStore = fallbackRuleStore
@@ -47,6 +49,7 @@ struct SettingsImportPayload: Equatable, Sendable {
         self.exclusionsStore = exclusionsStore
         self.indicatorPreferences = indicatorPreferences
         self.hotkeyPreferences = hotkeyPreferences
+        self.browserRulesStore = browserRulesStore
     }
 }
 
@@ -63,6 +66,7 @@ struct SettingsBackup: Codable, Equatable, Sendable {
     let exclusions: ExclusionsStore?
     let indicatorPreferences: IndicatorPreferences?
     let hotkeys: HotkeyPreferences?
+    let browserRules: BrowserRulesStore?
 
     init(
         appRulesStore: AppRulesStore,
@@ -74,7 +78,8 @@ struct SettingsBackup: Codable, Equatable, Sendable {
         includeStatistics: Bool = false,
         exclusionsStore: ExclusionsStore? = nil,
         indicatorPreferences: IndicatorPreferences? = nil,
-        hotkeyPreferences: HotkeyPreferences? = nil
+        hotkeyPreferences: HotkeyPreferences? = nil,
+        browserRulesStore: BrowserRulesStore? = nil
     ) {
         schemaVersion = Self.currentSchemaVersion
         self.exportedAt = exportedAt
@@ -86,6 +91,7 @@ struct SettingsBackup: Codable, Equatable, Sendable {
         exclusions = exclusionsStore
         self.indicatorPreferences = indicatorPreferences
         hotkeys = hotkeyPreferences
+        browserRules = browserRulesStore
     }
 
     func validate() throws {
@@ -131,6 +137,7 @@ struct SettingsBackup: Codable, Equatable, Sendable {
         let importedExclusions = exclusions ?? current.exclusionsStore
         let importedIndicator = indicatorPreferences ?? current.indicatorPreferences
         let importedHotkeys = hotkeys ?? current.hotkeyPreferences
+        let importedBrowserRules = browserRules ?? current.browserRulesStore
 
         switch mode {
         case .replace:
@@ -145,7 +152,8 @@ struct SettingsBackup: Codable, Equatable, Sendable {
                 ),
                 exclusionsStore: importedExclusions,
                 indicatorPreferences: importedIndicator,
-                hotkeyPreferences: importedHotkeys
+                hotkeyPreferences: importedHotkeys,
+                browserRulesStore: importedBrowserRules
             )
         case .merge:
             var mergedRules = current.appRulesStore.rules
@@ -162,6 +170,11 @@ struct SettingsBackup: Codable, Equatable, Sendable {
             mergedExclusions.switchingBundleIds.formUnion(importedExclusions.switchingBundleIds)
             mergedExclusions.indicatorBundleIds.formUnion(importedExclusions.indicatorBundleIds)
 
+            var mergedBrowserRules = current.browserRulesStore
+            for rule in importedBrowserRules.rules {
+                mergedBrowserRules.upsert(rule)
+            }
+
             return SettingsImportPayload(
                 appRulesStore: AppRulesStore(
                     v: MigrationVersion.current,
@@ -173,7 +186,8 @@ struct SettingsBackup: Codable, Equatable, Sendable {
                 ),
                 exclusionsStore: mergedExclusions,
                 indicatorPreferences: importedIndicator,
-                hotkeyPreferences: importedHotkeys
+                hotkeyPreferences: importedHotkeys,
+                browserRulesStore: mergedBrowserRules
             )
         }
     }

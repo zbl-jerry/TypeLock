@@ -212,3 +212,17 @@
 "settings.indicator.spacing.m" = "M";
 "settings.indicator.spacing.l" = "L";
 "settings.indicator.spacing.xl" = "XL";
+
+// Browser rules
+"settings.browser.title" = "Browser Rules";
+"settings.browser.add_rule" = "Add Rule";
+"settings.browser.empty" = "No browser rules";
+"settings.browser.match_type" = "Match";
+"settings.browser.pattern" = "Domain or regex";
+"settings.browser.input_method" = "Input Method";
+"settings.browser.enabled" = "Enabled";
+"settings.browser.invalid" = "Invalid rule";
+"settings.browser.delete" = "Delete";
+"settings.browser.match.domain" = "Exact Domain";
+"settings.browser.match.domain_suffix" = "Domain Suffix";
+"settings.browser.match.url_regex" = "URL Regex";

@@ -51,6 +51,13 @@ final class SettingsBackupTests: XCTestCase {
             ),
             hotkeyPreferences: HotkeyPreferences(bindings: [
                 "ime.en": HotkeyBinding(inputMethodId: "ime.en", keyCode: 49, modifiers: 256),
+            ]),
+            browserRulesStore: BrowserRulesStore(rules: [
+                BrowserRule(
+                    matchType: .domainSuffix,
+                    pattern: "example.com",
+                    inputMethodId: "ime.en"
+                ),
             ])
         )
     }
@@ -67,6 +74,7 @@ final class SettingsBackupTests: XCTestCase {
         XCTAssertEqual(decoded.indicatorPreferences?.duration, .threeSeconds)
         XCTAssertEqual(decoded.indicatorPreferences?.style, .iconOnly)
         XCTAssertEqual(decoded.hotkeys?.binding(for: "ime.en")?.keyCode, 49)
+        XCTAssertEqual(decoded.browserRules?.rules.first?.pattern, "example.com")
     }
 
     func testStatisticsAreOptional() throws {

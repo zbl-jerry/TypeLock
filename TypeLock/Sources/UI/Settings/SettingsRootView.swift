@@ -34,6 +34,8 @@ struct SettingsRootView: View {
                         IndicatorSettingsPane(store: store)
                     case .hotkeys:
                         HotkeysSettingsPane(store: store)
+                    case .browser:
+                        BrowserSettingsPane(store: store)
                     case .exclusions:
                         ExclusionsSettingsPane(store: store)
                     case .troubleshooting:
@@ -274,7 +276,8 @@ private struct GeneralSettingsPane: View {
             ) as? String ?? "unknown",
             exclusionsStore: store.exclusions,
             indicatorPreferences: store.indicator,
-            hotkeyPreferences: store.hotkeys
+            hotkeyPreferences: store.hotkeys,
+            browserRulesStore: store.browserRules
         )
     }
 
@@ -288,7 +291,8 @@ private struct GeneralSettingsPane: View {
             appSwitchStatisticsStore: store.appSwitchStatistics,
             exclusionsStore: store.exclusions,
             indicatorPreferences: store.indicator,
-            hotkeyPreferences: store.hotkeys
+            hotkeyPreferences: store.hotkeys,
+            browserRulesStore: store.browserRules
         )
     }
 }
@@ -495,6 +499,128 @@ private struct ActivationStrategyMenuContent: View {
             Text(title)
         }
         .toggleStyle(.checkbox)
+    }
+}
+
+private struct BrowserSettingsPane: View {
+    let store: StoreOf<AppFeature>
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("settings.browser.title")
+                    .font(.headline)
+                Spacer()
+                Button("settings.browser.add_rule") {
+                    addRule()
+                }
+                .disabled(store.inputMethods.isEmpty)
+            }
+            .padding()
+
+            if store.browserRules.rules.isEmpty {
+                Text("settings.browser.empty")
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
+                    .padding(.bottom)
+            } else {
+                ForEach(store.browserRules.rules) { rule in
+                    HStack(spacing: 10) {
+                        Picker("settings.browser.match_type", selection: Binding(
+                            get: { rule.matchType },
+                            set: { value in
+                                update(rule) {
+                                    $0.matchType = value
+                                }
+                            }
+                        )) {
+                            Text("settings.browser.match.domain").tag(BrowserRuleMatchType.domain)
+                            Text("settings.browser.match.domain_suffix").tag(BrowserRuleMatchType.domainSuffix)
+                            Text("settings.browser.match.url_regex").tag(BrowserRuleMatchType.urlRegex)
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(width: 140)
+
+                        TextField("settings.browser.pattern", text: Binding(
+                            get: { rule.pattern },
+                            set: { value in
+                                update(rule) {
+                                    $0.pattern = value
+                                }
+                            }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+
+                        Picker("settings.browser.input_method", selection: Binding(
+                            get: { rule.inputMethodId },
+                            set: { value in
+                                update(rule) {
+                                    $0.inputMethodId = value
+                                }
+                            }
+                        )) {
+                            ForEach(store.inputMethods) { inputMethod in
+                                Text(inputMethod.name).tag(inputMethod.id)
+                            }
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(width: 150)
+
+                        Toggle("settings.browser.enabled", isOn: Binding(
+                            get: { rule.enabled },
+                            set: { value in
+                                update(rule) {
+                                    $0.enabled = value
+                                }
+                            }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(.checkbox)
+
+                        if BrowserRuleMatcher.validate(rule) != nil {
+                            Image(systemName: "exclamationmark.triangle")
+                                .foregroundStyle(.orange)
+                                .help("settings.browser.invalid")
+                        }
+
+                        Button(role: .destructive) {
+                            var rules = store.browserRules
+                            rules.remove(id: rule.id)
+                            store.send(.view(.setBrowserRules(rules)))
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                        .buttonStyle(.borderless)
+                        .help("settings.browser.delete")
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                    .overlay(alignment: .bottom) {
+                        Divider()
+                    }
+                }
+            }
+        }
+        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func addRule() {
+        guard let inputMethod = store.inputMethods.first else { return }
+        var rules = store.browserRules
+        let rule = BrowserRule(inputMethodId: inputMethod.id)
+        rules.upsert(rule)
+        store.send(.view(.setBrowserRules(rules)))
+    }
+
+    private func update(_ rule: BrowserRule, change: (inout BrowserRule) -> Void) {
+        var updated = rule
+        change(&updated)
+        updated.updatedAt = Date()
+        var rules = store.browserRules
+        rules.upsert(updated)
+        store.send(.view(.setBrowserRules(rules)))
     }
 }
 

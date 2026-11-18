@@ -212,3 +212,17 @@
 "settings.indicator.spacing.m" = "M";
 "settings.indicator.spacing.l" = "L";
 "settings.indicator.spacing.xl" = "XL";
+
+// 瀏覽器規則
+"settings.browser.title" = "瀏覽器規則";
+"settings.browser.add_rule" = "新增規則";
+"settings.browser.empty" = "尚無瀏覽器規則";
+"settings.browser.match_type" = "比對方式";
+"settings.browser.pattern" = "網域或正規表示式";
+"settings.browser.input_method" = "輸入法";
+"settings.browser.enabled" = "啟用";
+"settings.browser.invalid" = "規則無效";
+"settings.browser.delete" = "刪除";
+"settings.browser.match.domain" = "精確網域";
+"settings.browser.match.domain_suffix" = "網域後綴";
+"settings.browser.match.url_regex" = "URL 正則";

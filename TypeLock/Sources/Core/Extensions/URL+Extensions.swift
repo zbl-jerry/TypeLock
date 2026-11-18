@@ -7,6 +7,7 @@ enum AppStorageConfiguration {
     static let exclusionsFilename = "exclusions.json"
     static let indicatorPreferencesFilename = "indicator.json"
     static let hotkeyPreferencesFilename = "hotkeys.json"
+    static let browserRulesFilename = "browser-rules.json"
 
     private final class BundleLocator {}
 
@@ -94,7 +95,19 @@ extension URL {
         .appending(path: AppStorageConfiguration.hotkeyPreferencesFilename)
     }
 
+    static func browserRulesFileURL(
+        applicationSupportDirectory: URL = .applicationSupportDirectory,
+        bundleIdentifier: String = AppStorageConfiguration.bundleIdentifier
+    ) -> URL {
+        appStorageDirectoryURL(
+            applicationSupportDirectory: applicationSupportDirectory,
+            bundleIdentifier: bundleIdentifier
+        )
+        .appending(path: AppStorageConfiguration.browserRulesFilename)
+    }
+
     static let exclusionsStoreURL = exclusionsStoreFileURL()
     static let indicatorPreferencesURL = indicatorPreferencesFileURL()
     static let hotkeyPreferencesURL = hotkeyPreferencesFileURL()
+    static let browserRulesURL = browserRulesFileURL()
 }

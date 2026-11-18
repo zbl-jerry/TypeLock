@@ -44,6 +44,7 @@ struct AppFeature {
         @Shared var exclusionsStore: ExclusionsStore
         @Shared var indicatorPreferences: IndicatorPreferences
         @Shared var hotkeyPreferences: HotkeyPreferences
+        @Shared var browserRulesStore: BrowserRulesStore
         var switching: SwitchingFeature.State
         var appAvailability = AppAvailabilitySnapshot()
         var isMenuPresented = false
@@ -77,6 +78,10 @@ struct AppFeature {
                 wrappedValue: HotkeyPreferences(),
                 .fileStorage(.hotkeyPreferencesURL)
             ),
+            browserRulesStore: Shared<BrowserRulesStore> = Shared(
+                wrappedValue: BrowserRulesStore(),
+                .fileStorage(.browserRulesURL)
+            ),
             appAvailability: AppAvailabilitySnapshot = AppAvailabilitySnapshot(),
             currentFrontmostBundleId: String? = nil,
             inputMethodCatalogStatus: SwitchingFeature.State.InputMethodCatalogStatus = .loading,
@@ -94,6 +99,7 @@ struct AppFeature {
             self._exclusionsStore = exclusionsStore
             self._indicatorPreferences = indicatorPreferences
             self._hotkeyPreferences = hotkeyPreferences
+            self._browserRulesStore = browserRulesStore
             self.switching = SwitchingFeature.State(
                 appRulesStore: appRulesStore,
                 appSwitchStatisticsStore: appSwitchStatisticsStore,
@@ -124,6 +130,7 @@ struct AppFeature {
         case restoreAllIgnoredAppsTapped
         case restoreIgnoredAppTapped(bundleId: String)
         case retryCurrentAppTapped
+        case setBrowserRules(BrowserRulesStore)
         case setHotkeyPreferences(HotkeyPreferences)
         case setIndicatorExclusion(bundleId: String, excluded: Bool)
         case setIndicatorPreferences(IndicatorPreferences)
@@ -184,6 +191,7 @@ struct AppFeature {
                 state.$exclusionsStore.withLock { $0.migrateIfNeeded() }
                 state.$indicatorPreferences.withLock { $0.migrateIfNeeded() }
                 state.$hotkeyPreferences.withLock { $0.migrateIfNeeded() }
+                state.$browserRulesStore.withLock { $0.migrateIfNeeded() }
                 state.appAvailability = appAvailabilityClient.snapshot(for: state.appRules.values)
                 normalizeFallbackRule(in: &state)
                 let initialSwitchingEffect = reduceSwitching(.loadInitialState, state: &state)
@@ -220,6 +228,7 @@ struct AppFeature {
                 state.$exclusionsStore.withLock { $0 = payload.exclusionsStore }
                 state.$indicatorPreferences.withLock { $0 = payload.indicatorPreferences }
                 state.$hotkeyPreferences.withLock { $0 = payload.hotkeyPreferences }
+                state.$browserRulesStore.withLock { $0 = payload.browserRulesStore }
                 return .none
 
             case .view(.clearSwitchStatisticsTapped):
@@ -351,6 +360,12 @@ struct AppFeature {
                     $0 = preferences
                 }
                 return startHotkeysEffect(preferences)
+
+            case .view(.setBrowserRules(let rules)):
+                state.$browserRulesStore.withLock {
+                    $0 = rules
+                }
+                return .none
 
             case .view(.retryCurrentAppTapped):
                 return reduceSwitching(.retryCurrentApp, state: &state)
