@@ -31,19 +31,22 @@ struct SettingsImportPayload: Equatable, Sendable {
     let appSwitchStatisticsStore: AppSwitchStatisticsStore
     let exclusionsStore: ExclusionsStore
     let indicatorPreferences: IndicatorPreferences
+    let hotkeyPreferences: HotkeyPreferences
 
     init(
         appRulesStore: AppRulesStore,
         fallbackRuleStore: FallbackRuleStore,
         appSwitchStatisticsStore: AppSwitchStatisticsStore,
         exclusionsStore: ExclusionsStore = ExclusionsStore(),
-        indicatorPreferences: IndicatorPreferences = IndicatorPreferences()
+        indicatorPreferences: IndicatorPreferences = IndicatorPreferences(),
+        hotkeyPreferences: HotkeyPreferences = HotkeyPreferences()
     ) {
         self.appRulesStore = appRulesStore
         self.fallbackRuleStore = fallbackRuleStore
         self.appSwitchStatisticsStore = appSwitchStatisticsStore
         self.exclusionsStore = exclusionsStore
         self.indicatorPreferences = indicatorPreferences
+        self.hotkeyPreferences = hotkeyPreferences
     }
 }
 
@@ -59,6 +62,7 @@ struct SettingsBackup: Codable, Equatable, Sendable {
     let statistics: [String: Int]?
     let exclusions: ExclusionsStore?
     let indicatorPreferences: IndicatorPreferences?
+    let hotkeys: HotkeyPreferences?
 
     init(
         appRulesStore: AppRulesStore,
@@ -69,7 +73,8 @@ struct SettingsBackup: Codable, Equatable, Sendable {
         exportedAt: Date = Date(),
         includeStatistics: Bool = false,
         exclusionsStore: ExclusionsStore? = nil,
-        indicatorPreferences: IndicatorPreferences? = nil
+        indicatorPreferences: IndicatorPreferences? = nil,
+        hotkeyPreferences: HotkeyPreferences? = nil
     ) {
         schemaVersion = Self.currentSchemaVersion
         self.exportedAt = exportedAt
@@ -80,6 +85,7 @@ struct SettingsBackup: Codable, Equatable, Sendable {
         self.statistics = includeStatistics ? statistics.counts : nil
         exclusions = exclusionsStore
         self.indicatorPreferences = indicatorPreferences
+        hotkeys = hotkeyPreferences
     }
 
     func validate() throws {
@@ -124,6 +130,7 @@ struct SettingsBackup: Codable, Equatable, Sendable {
         let importedStatistics = statistics ?? current.appSwitchStatisticsStore.counts
         let importedExclusions = exclusions ?? current.exclusionsStore
         let importedIndicator = indicatorPreferences ?? current.indicatorPreferences
+        let importedHotkeys = hotkeys ?? current.hotkeyPreferences
 
         switch mode {
         case .replace:
@@ -137,7 +144,8 @@ struct SettingsBackup: Codable, Equatable, Sendable {
                     counts: importedStatistics
                 ),
                 exclusionsStore: importedExclusions,
-                indicatorPreferences: importedIndicator
+                indicatorPreferences: importedIndicator,
+                hotkeyPreferences: importedHotkeys
             )
         case .merge:
             var mergedRules = current.appRulesStore.rules
@@ -164,7 +172,8 @@ struct SettingsBackup: Codable, Equatable, Sendable {
                     counts: mergedStatistics
                 ),
                 exclusionsStore: mergedExclusions,
-                indicatorPreferences: importedIndicator
+                indicatorPreferences: importedIndicator,
+                hotkeyPreferences: importedHotkeys
             )
         }
     }

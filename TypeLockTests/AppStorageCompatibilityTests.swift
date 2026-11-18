@@ -151,6 +151,49 @@ final class AppStorageCompatibilityTests: XCTestCase {
         XCTAssertEqual(store.launchStrategy, .none)
     }
 
+
+    func testHotkeyPreferencesRoundTripsAndDetectsConflicts() throws {
+        var preferences = HotkeyPreferences()
+        let commandSpace = HotkeyBinding(
+            inputMethodId: "ime.en",
+            keyCode: 49,
+            modifiers: 256
+        )
+        preferences.setBinding(commandSpace)
+
+        let data = try JSONEncoder().encode(preferences)
+        let decoded = try JSONDecoder().decode(HotkeyPreferences.self, from: data)
+        XCTAssertEqual(decoded, preferences)
+        XCTAssertEqual(decoded.binding(for: "ime.en"), commandSpace)
+
+        let conflict = HotkeyBinding(
+            inputMethodId: "ime.zh",
+            keyCode: 49,
+            modifiers: 256
+        )
+        XCTAssertEqual(preferences.conflicts(with: conflict), commandSpace)
+
+        preferences.removeBinding(for: "ime.en")
+        XCTAssertNil(preferences.binding(for: "ime.en"))
+    }
+
+    func testHotkeyPreferencesURLUsesHotkeysFilename() {
+        let applicationSupportDirectory = URL(fileURLWithPath: "/tmp/Application Support", isDirectory: true)
+        let url = URL.hotkeyPreferencesFileURL(
+            applicationSupportDirectory: applicationSupportDirectory,
+            bundleIdentifier: "com.test.TypeLock"
+        )
+
+        XCTAssertEqual(AppStorageConfiguration.hotkeyPreferencesFilename, "hotkeys.json")
+        XCTAssertEqual(
+            url.path,
+            applicationSupportDirectory
+                .appending(path: "com.test.TypeLock", directoryHint: .isDirectory)
+                .appending(path: AppStorageConfiguration.hotkeyPreferencesFilename)
+                .path
+        )
+    }
+
     func testExclusionsStoreRoundTripsAndMigrates() throws {
         var store = ExclusionsStore(
             v: 1,

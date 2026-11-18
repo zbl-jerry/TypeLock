@@ -65,6 +65,59 @@ final class SwitchingFeatureTests: XCTestCase {
         XCTAssertEqual(switchedInputMethods, [targetInputMethod])
     }
 
+
+    func testHotkeySwitchesToSelectedInputMethod() async {
+        let app = AppInfo(bundleId: "com.test.editor", name: "Editor", path: "/Applications/Editor.app")
+        let inputMethod = InputMethod(id: "ime.en", name: "English")
+        let timestamp = Date(timeIntervalSince1970: 10)
+        let recorder = SwitchRecorder()
+
+        var initialState = makeState()
+        initialState.inputMethods = [inputMethod]
+        initialState.currentFrontmostBundleId = app.bundleId
+
+        let store = TestStore(initialState: initialState) {
+            SwitchingFeature()
+        }
+        store.dependencies.date = .constant(timestamp)
+        store.dependencies.inputMethodClient.currentInputMethodId = { "ime.zh" }
+        store.dependencies.inputMethodClient.switchToInputMethod = { inputMethodId in
+            await recorder.record(inputMethodId)
+        }
+
+        await store.send(.hotkeyPressed(inputMethod.id)) {
+            $0.nextSwitchAttemptID = 1
+            $0.pendingProgrammaticSwitch = .init(
+                appName: "Hotkey",
+                bundleId: app.bundleId,
+                inputMethodId: inputMethod.id,
+                inputMethodName: inputMethod.name
+            )
+        }
+
+        await store.receive(.response(.programmaticSwitchFinished(
+            attemptID: 0,
+            outcome: .switched
+        ))) {
+            $0.pendingProgrammaticSwitch = nil
+            $0.lastSwitchAttempt = .init(
+                appName: "Hotkey",
+                bundleId: app.bundleId,
+                inputMethodId: inputMethod.id,
+                inputMethodName: inputMethod.name,
+                outcome: .switched,
+                ruleSource: .app,
+                timestamp: timestamp
+            )
+            $0.$appSwitchStatisticsStore.withLock {
+                $0.counts[app.bundleId] = 1
+            }
+        }
+
+        let switchedInputMethods = await recorder.values
+        XCTAssertEqual(switchedInputMethods, [inputMethod.id])
+    }
+
     func testSwitchingExclusionSkipsAutomaticSwitch() async {
         let app = AppInfo(bundleId: "com.test.terminal", name: "Terminal", path: "/Applications/Terminal.app")
         let inputMethod = InputMethod(id: "ime.en", name: "English")

@@ -6,6 +6,7 @@ import Sharing
 struct AppFeature {
     @Dependency(\.appAvailabilityClient) var appAvailabilityClient
     @Dependency(\.date.now) var now
+    @Dependency(\.hotkeyClient) var hotkeyClient
     @Dependency(\.launchAtLoginClient) var launchAtLoginClient
     @Dependency(\.workspaceClient) var workspaceClient
 
@@ -42,6 +43,7 @@ struct AppFeature {
         @Shared var fallbackRuleStore: FallbackRuleStore
         @Shared var exclusionsStore: ExclusionsStore
         @Shared var indicatorPreferences: IndicatorPreferences
+        @Shared var hotkeyPreferences: HotkeyPreferences
         var switching: SwitchingFeature.State
         var appAvailability = AppAvailabilitySnapshot()
         var isMenuPresented = false
@@ -71,6 +73,10 @@ struct AppFeature {
                 wrappedValue: IndicatorPreferences(),
                 .fileStorage(.indicatorPreferencesURL)
             ),
+            hotkeyPreferences: Shared<HotkeyPreferences> = Shared(
+                wrappedValue: HotkeyPreferences(),
+                .fileStorage(.hotkeyPreferencesURL)
+            ),
             appAvailability: AppAvailabilitySnapshot = AppAvailabilitySnapshot(),
             currentFrontmostBundleId: String? = nil,
             inputMethodCatalogStatus: SwitchingFeature.State.InputMethodCatalogStatus = .loading,
@@ -87,6 +93,7 @@ struct AppFeature {
             self._fallbackRuleStore = fallbackRuleStore
             self._exclusionsStore = exclusionsStore
             self._indicatorPreferences = indicatorPreferences
+            self._hotkeyPreferences = hotkeyPreferences
             self.switching = SwitchingFeature.State(
                 appRulesStore: appRulesStore,
                 appSwitchStatisticsStore: appSwitchStatisticsStore,
@@ -117,6 +124,7 @@ struct AppFeature {
         case restoreAllIgnoredAppsTapped
         case restoreIgnoredAppTapped(bundleId: String)
         case retryCurrentAppTapped
+        case setHotkeyPreferences(HotkeyPreferences)
         case setIndicatorExclusion(bundleId: String, excluded: Bool)
         case setIndicatorPreferences(IndicatorPreferences)
         case setSwitchingExclusion(bundleId: String, excluded: Bool)
@@ -133,6 +141,7 @@ struct AppFeature {
     }
 
     enum SystemAction: Equatable, Sendable {
+        case hotkeyPressed(String)
         case workspaceEvent(WorkspaceClient.Event)
     }
 
@@ -147,6 +156,7 @@ struct AppFeature {
     }
 
     private enum CancelID {
+        case hotkeys
         case workspaceEvents
     }
 
@@ -173,6 +183,7 @@ struct AppFeature {
                 state.$fallbackRuleStore.withLock { $0.migrateIfNeeded() }
                 state.$exclusionsStore.withLock { $0.migrateIfNeeded() }
                 state.$indicatorPreferences.withLock { $0.migrateIfNeeded() }
+                state.$hotkeyPreferences.withLock { $0.migrateIfNeeded() }
                 state.appAvailability = appAvailabilityClient.snapshot(for: state.appRules.values)
                 normalizeFallbackRule(in: &state)
                 let initialSwitchingEffect = reduceSwitching(.loadInitialState, state: &state)
@@ -191,7 +202,8 @@ struct AppFeature {
                         }
                     }
                     .cancellable(id: CancelID.workspaceEvents, cancelInFlight: true),
-                    reduceSwitching(.observeInputMethods, state: &state)
+                    reduceSwitching(.observeInputMethods, state: &state),
+                    startHotkeysEffect(state.hotkeys)
                 )
 
             case .view where state.isReadmeDemo:
@@ -207,6 +219,7 @@ struct AppFeature {
                 state.$appSwitchStatisticsStore.withLock { $0 = payload.appSwitchStatisticsStore }
                 state.$exclusionsStore.withLock { $0 = payload.exclusionsStore }
                 state.$indicatorPreferences.withLock { $0 = payload.indicatorPreferences }
+                state.$hotkeyPreferences.withLock { $0 = payload.hotkeyPreferences }
                 return .none
 
             case .view(.clearSwitchStatisticsTapped):
@@ -333,6 +346,12 @@ struct AppFeature {
                 }
                 return .none
 
+            case .view(.setHotkeyPreferences(let preferences)):
+                state.$hotkeyPreferences.withLock {
+                    $0 = preferences
+                }
+                return startHotkeysEffect(preferences)
+
             case .view(.retryCurrentAppTapped):
                 return reduceSwitching(.retryCurrentApp, state: &state)
 
@@ -420,6 +439,9 @@ struct AppFeature {
                 }
                 return .none
 
+            case .system(.hotkeyPressed(let inputMethodId)):
+                return reduceSwitching(.hotkeyPressed(inputMethodId), state: &state)
+
             case .system(.workspaceEvent(.launched(let appInfo))):
                 return .merge(
                     reduceSwitching(.applicationLaunched(appInfo), state: &state),
@@ -465,6 +487,28 @@ struct AppFeature {
         .run { send in
             await send(.response(.runningApps(await workspaceClient.runningApplications())))
         }
+    }
+
+    private func startHotkeysEffect(_ preferences: HotkeyPreferences) -> Effect<Action> {
+        let bindings = Array(preferences.bindings.values)
+        guard !bindings.isEmpty else {
+            return .cancel(id: CancelID.hotkeys)
+        }
+
+        return .run { send in
+            let events = AsyncStream<String> { continuation in
+                hotkeyClient.start(bindings) { inputMethodId in
+                    continuation.yield(inputMethodId)
+                }
+                continuation.onTermination = { _ in
+                    hotkeyClient.stop()
+                }
+            }
+            for await inputMethodId in events {
+                await send(.system(.hotkeyPressed(inputMethodId)))
+            }
+        }
+        .cancellable(id: CancelID.hotkeys, cancelInFlight: true)
     }
 
     private func fallbackSupportedStrategy(_ strategy: InputMethodStrategy) -> InputMethodStrategy {

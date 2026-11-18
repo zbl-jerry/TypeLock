@@ -164,6 +164,7 @@ struct SwitchingFeature {
         case observeInputMethods
         case reloadInputMethods
         case retryCurrentApp
+        case hotkeyPressed(String)
         case applicationLaunched(AppInfo)
         case applicationActivated(AppInfo)
         case applicationTerminated(bundleId: String)
@@ -340,6 +341,18 @@ struct SwitchingFeature {
             case .retryCurrentApp:
                 return retryFrontmostApplicationEffect(in: &state)
 
+            case .hotkeyPressed(let inputMethodId):
+                guard let inputMethod = state.inputMethods.first(where: { $0.id == inputMethodId }) else {
+                    return .none
+                }
+                return beginProgrammaticSwitch(
+                    appName: "Hotkey",
+                    bundleId: state.currentFrontmostBundleId ?? "__hotkey__",
+                    inputMethod: inputMethod,
+                    ruleSource: .app,
+                    state: &state
+                )
+
             case .applicationIgnored(let bundleId):
                 guard state.currentFrontmostBundleId == bundleId
                     || state.pendingProgrammaticSwitch?.bundleId == bundleId
@@ -403,39 +416,55 @@ struct SwitchingFeature {
             return .cancel(id: CancelID.programmaticSwitch)
         case let .target(inputMethod, ruleSource):
             state.shouldRetryFrontmostAfterInputMethodRefresh = false
-            let attemptID = state.nextSwitchAttemptID
-            state.nextSwitchAttemptID += 1
-            state.pendingProgrammaticSwitch = .init(
+            return beginProgrammaticSwitch(
                 appName: appInfo.name,
-                attemptID: attemptID,
                 bundleId: appInfo.bundleId,
-                inputMethodId: inputMethod.id,
-                inputMethodName: inputMethod.name,
-                ruleSource: ruleSource
+                inputMethod: inputMethod,
+                ruleSource: ruleSource,
+                state: &state
             )
-
-            return .run { send in
-                let outcome: State.ProgrammaticSwitchOutcome
-                do {
-                    if (try? await inputMethodClient.currentInputMethodId()) == inputMethod.id {
-                        outcome = .alreadySelected
-                    } else {
-                        guard !Task.isCancelled else { return }
-                        try await inputMethodClient.switchToInputMethod(inputMethod.id)
-                        outcome = .switched
-                    }
-                } catch {
-                    guard !Task.isCancelled else { return }
-                    outcome = .failed(.diagnostic(from: error))
-                }
-                guard !Task.isCancelled else { return }
-                await send(.response(.programmaticSwitchFinished(
-                    attemptID: attemptID,
-                    outcome: outcome
-                )))
-            }
-            .cancellable(id: CancelID.programmaticSwitch, cancelInFlight: true)
         }
+    }
+
+    private func beginProgrammaticSwitch(
+        appName: String,
+        bundleId: String,
+        inputMethod: InputMethod,
+        ruleSource: State.RuleSource,
+        state: inout State
+    ) -> Effect<Action> {
+        let attemptID = state.nextSwitchAttemptID
+        state.nextSwitchAttemptID += 1
+        state.pendingProgrammaticSwitch = .init(
+            appName: appName,
+            attemptID: attemptID,
+            bundleId: bundleId,
+            inputMethodId: inputMethod.id,
+            inputMethodName: inputMethod.name,
+            ruleSource: ruleSource
+        )
+
+        return .run { send in
+            let outcome: State.ProgrammaticSwitchOutcome
+            do {
+                if (try? await inputMethodClient.currentInputMethodId()) == inputMethod.id {
+                    outcome = .alreadySelected
+                } else {
+                    guard !Task.isCancelled else { return }
+                    try await inputMethodClient.switchToInputMethod(inputMethod.id)
+                    outcome = .switched
+                }
+            } catch {
+                guard !Task.isCancelled else { return }
+                outcome = .failed(.diagnostic(from: error))
+            }
+            guard !Task.isCancelled else { return }
+            await send(.response(.programmaticSwitchFinished(
+                attemptID: attemptID,
+                outcome: outcome
+            )))
+        }
+        .cancellable(id: CancelID.programmaticSwitch, cancelInFlight: true)
     }
 
     private func beginInputMethodRefresh(in state: inout State) -> Effect<Action> {

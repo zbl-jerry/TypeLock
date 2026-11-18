@@ -48,7 +48,10 @@ final class SettingsBackupTests: XCTestCase {
                 enabled: true,
                 duration: .threeSeconds,
                 style: .iconOnly
-            )
+            ),
+            hotkeyPreferences: HotkeyPreferences(bindings: [
+                "ime.en": HotkeyBinding(inputMethodId: "ime.en", keyCode: 49, modifiers: 256),
+            ])
         )
     }
 
@@ -63,6 +66,7 @@ final class SettingsBackupTests: XCTestCase {
         XCTAssertTrue(decoded.exclusions?.isExcludedFromSwitching("com.test.terminal") == true)
         XCTAssertEqual(decoded.indicatorPreferences?.duration, .threeSeconds)
         XCTAssertEqual(decoded.indicatorPreferences?.style, .iconOnly)
+        XCTAssertEqual(decoded.hotkeys?.binding(for: "ime.en")?.keyCode, 49)
     }
 
     func testStatisticsAreOptional() throws {

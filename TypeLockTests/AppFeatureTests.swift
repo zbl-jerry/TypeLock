@@ -307,6 +307,7 @@ final class AppFeatureTests: XCTestCase {
             $0.$appSwitchStatisticsStore.withLock { $0 = payload.appSwitchStatisticsStore }
             $0.$exclusionsStore.withLock { $0 = payload.exclusionsStore }
             $0.$indicatorPreferences.withLock { $0 = payload.indicatorPreferences }
+            $0.$hotkeyPreferences.withLock { $0 = payload.hotkeyPreferences }
         }
 
         XCTAssertEqual(store.state.appRules, payload.appRulesStore.rules)

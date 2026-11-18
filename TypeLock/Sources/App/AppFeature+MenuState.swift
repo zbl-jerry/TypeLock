@@ -47,6 +47,10 @@ extension AppFeature.State {
         indicatorPreferences
     }
 
+    var hotkeys: HotkeyPreferences {
+        hotkeyPreferences
+    }
+
     var menuBarIconSystemName: String {
         if inputMethodDiagnostic != nil {
             return "exclamationmark.triangle"

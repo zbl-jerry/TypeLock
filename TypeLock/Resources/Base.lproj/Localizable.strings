@@ -186,3 +186,10 @@
 "settings.indicator.size.normal" = "正常";
 "settings.indicator.size.medium" = "中等";
 "settings.indicator.size.large" = "超大";
+
+// 输入法快捷键
+"settings.hotkeys.none" = "未设置";
+"settings.hotkeys.record" = "录制";
+"settings.hotkeys.recording" = "按下快捷键…";
+"settings.hotkeys.clear" = "清除";
+"settings.hotkeys.conflict" = "快捷键已被占用";

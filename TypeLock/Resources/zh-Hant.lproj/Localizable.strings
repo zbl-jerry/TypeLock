@@ -186,3 +186,10 @@
 "settings.indicator.size.normal" = "正常";
 "settings.indicator.size.medium" = "中等";
 "settings.indicator.size.large" = "超大";
+
+// 輸入法快速鍵
+"settings.hotkeys.none" = "未設定";
+"settings.hotkeys.record" = "錄製";
+"settings.hotkeys.recording" = "按下快速鍵…";
+"settings.hotkeys.clear" = "清除";
+"settings.hotkeys.conflict" = "快速鍵已被使用";

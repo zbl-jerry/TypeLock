@@ -186,3 +186,10 @@
 "settings.indicator.size.normal" = "Normal";
 "settings.indicator.size.medium" = "Medium";
 "settings.indicator.size.large" = "Large";
+
+// Input method shortcuts
+"settings.hotkeys.none" = "Not Set";
+"settings.hotkeys.record" = "Record";
+"settings.hotkeys.recording" = "Press a shortcut…";
+"settings.hotkeys.clear" = "Clear";
+"settings.hotkeys.conflict" = "Shortcut already in use";
