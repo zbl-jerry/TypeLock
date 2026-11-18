@@ -92,6 +92,7 @@ struct AppFeature {
                 appSwitchStatisticsStore: appSwitchStatisticsStore,
                 fallbackRuleStore: fallbackRuleStore,
                 exclusionsStore: exclusionsStore,
+                indicatorPreferences: indicatorPreferences,
                 currentFrontmostBundleId: currentFrontmostBundleId,
                 inputMethodCatalogStatus: inputMethodCatalogStatus,
                 inputMethods: inputMethods,

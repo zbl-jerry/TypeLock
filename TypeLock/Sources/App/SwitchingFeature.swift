@@ -6,6 +6,7 @@ import Sharing
 @Reducer
 struct SwitchingFeature {
     @Dependency(\.date.now) var now
+    @Dependency(\.indicatorClient) var indicatorClient
     @Dependency(\.inputMethodClient) var inputMethodClient
     @Dependency(\.workspaceClient) var workspaceClient
 
@@ -70,6 +71,7 @@ struct SwitchingFeature {
         @Shared var appSwitchStatisticsStore: AppSwitchStatisticsStore
         @Shared var fallbackRuleStore: FallbackRuleStore
         @Shared var exclusionsStore: ExclusionsStore
+        @Shared var indicatorPreferences: IndicatorPreferences
         var currentFrontmostBundleId: String?
         var inputMethodCatalogStatus: InputMethodCatalogStatus = .loading
         var inputMethods: [InputMethod] = []
@@ -91,6 +93,10 @@ struct SwitchingFeature {
                 wrappedValue: ExclusionsStore(),
                 .fileStorage(.exclusionsStoreURL)
             ),
+            indicatorPreferences: Shared<IndicatorPreferences> = Shared(
+                wrappedValue: IndicatorPreferences(),
+                .fileStorage(.indicatorPreferencesURL)
+            ),
             currentFrontmostBundleId: String? = nil,
             inputMethodCatalogStatus: InputMethodCatalogStatus = .loading,
             inputMethods: [InputMethod] = [],
@@ -100,6 +106,7 @@ struct SwitchingFeature {
             self._appSwitchStatisticsStore = appSwitchStatisticsStore
             self._fallbackRuleStore = fallbackRuleStore
             self._exclusionsStore = exclusionsStore
+            self._indicatorPreferences = indicatorPreferences
             self.currentFrontmostBundleId = currentFrontmostBundleId
             self.inputMethodCatalogStatus = inputMethodCatalogStatus
             self.inputMethods = inputMethods
@@ -310,6 +317,20 @@ struct SwitchingFeature {
                     state.$appSwitchStatisticsStore.withLock { store in
                         store.counts[pendingSwitch.bundleId, default: 0] += 1
                     }
+                }
+
+                let preferences = state.indicatorPreferences
+                let shouldShowIndicator = preferences.enabled
+                    && !state.exclusionsStore.isExcludedFromIndicator(pendingSwitch.bundleId)
+                    && (
+                        resolvedOutcome == .switched
+                            || (resolvedOutcome == .alreadySelected && !preferences.onlyOnChange)
+                    )
+                if shouldShowIndicator {
+                    indicatorClient.show(
+                        pendingSwitch.inputMethodName ?? pendingSwitch.inputMethodId,
+                        preferences
+                    )
                 }
                 return .none
 
