@@ -4,10 +4,7 @@ import ComposableArchitecture
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Phase 0 settings window shell.
-///
-/// The navigation and section boundaries are final; feature panes land in
-/// later phases. General and Troubleshooting already surface working values.
+/// Settings window with sidebar navigation and the current feature panes.
 struct SettingsRootView: View {
     let store: StoreOf<AppFeature>
 
@@ -19,6 +16,7 @@ struct SettingsRootView: View {
                 Label(section.titleKey, systemImage: section.systemImage)
                     .tag(section)
             }
+            .safeAreaPadding(.top, 24)
             .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 240)
         } detail: {
             ScrollView {
@@ -53,6 +51,7 @@ struct SettingsRootView: View {
             }
         }
         .frame(minWidth: 760, minHeight: 520)
+        .background(SettingsWindowConfigurator())
     }
 
     private func sectionHeader(_ section: SettingsSection) -> some View {
@@ -339,6 +338,7 @@ private struct AppRulesSettingsPane: View {
     }
 }
 
+@MainActor
 private struct AppRuleSettingsRow: View {
     let rule: AppRuleRecord
     let inputMethods: [InputMethod]
@@ -360,47 +360,116 @@ private struct AppRuleSettingsRow: View {
                     .resizable()
                     .frame(width: 22, height: 22)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(rule.lastKnownName)
-                    Text(rule.bundleId)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                Text(rule.lastKnownName)
+                    .help(rule.bundleId)
 
                 Spacer()
 
-                VStack(alignment: .trailing, spacing: 4) {
-                    Menu {
-                        LaunchStrategyMenuContent(
-                            strategy: rule.launchStrategy,
-                            inputMethods: inputMethods,
-                            onSelect: onSetLaunchStrategy
-                        )
-                    } label: {
-                        HStack(spacing: 6) {
-                            Text("settings.apps.launch")
-                            Text(launchTitle)
-                                .foregroundStyle(.secondary)
+                VStack(alignment: .trailing, spacing: 6) {
+                    HStack(spacing: 6) {
+                        (Text("settings.apps.launch") + Text(":"))
+                            .foregroundStyle(.secondary)
+                        Menu {
+                            LaunchStrategyMenuContent(
+                                strategy: rule.launchStrategy,
+                                inputMethods: inputMethods,
+                                onSelect: onSetLaunchStrategy
+                            )
+                        } label: {
+                            HStack(spacing: 6) {
+                                launchIcon
+                                Text(launchTitle)
+                                    .lineLimit(1)
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(.caption2.weight(.semibold))
+                                    .foregroundStyle(.blue)
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .frame(minWidth: 150, alignment: .leading)
+                            .background(
+                                Color.primary.opacity(0.06),
+                                in: RoundedRectangle(cornerRadius: 6)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
+                            )
                         }
+                        .controlSize(.small)
+                        .menuIndicator(.hidden)
                     }
 
-                    Menu {
-                        ActivationStrategyMenuContent(
-                            strategy: rule.strategy,
-                            inputMethods: inputMethods,
-                            onSelect: onSetActivationStrategy
-                        )
-                    } label: {
-                        HStack(spacing: 6) {
-                            Text("settings.apps.activation")
-                            Text(activationTitle)
-                                .foregroundStyle(.secondary)
+                    HStack(spacing: 6) {
+                        (Text("settings.apps.activation") + Text(":"))
+                            .foregroundStyle(.secondary)
+                        Menu {
+                            ActivationStrategyMenuContent(
+                                strategy: rule.strategy,
+                                inputMethods: inputMethods,
+                                onSelect: onSetActivationStrategy
+                            )
+                        } label: {
+                            HStack(spacing: 6) {
+                                activationIcon
+                                Text(activationTitle)
+                                    .lineLimit(1)
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(.caption2.weight(.semibold))
+                                    .foregroundStyle(.blue)
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .frame(minWidth: 150, alignment: .leading)
+                            .background(
+                                Color.primary.opacity(0.06),
+                                in: RoundedRectangle(cornerRadius: 6)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color(nsColor: .separatorColor), lineWidth: 0.5)
+                            )
                         }
+                        .controlSize(.small)
+                        .menuIndicator(.hidden)
                     }
                 }
-                .menuStyle(.borderlessButton)
                 .fixedSize()
             }
+        }
+    }
+
+    @ViewBuilder
+    private var launchIcon: some View {
+        switch rule.launchStrategy {
+        case .inherit:
+            Image(systemName: "arrow.triangle.branch")
+                .frame(width: 16, height: 16)
+        case .none:
+            Image(systemName: "nosign")
+                .frame(width: 16, height: 16)
+        case .followLast:
+            Image(systemName: "clock.arrow.circlepath")
+                .frame(width: 16, height: 16)
+        case let .fixed(inputMethodId):
+            InputMethodIconView(inputMethodId: inputMethodId)
+        }
+    }
+
+    @ViewBuilder
+    private var activationIcon: some View {
+        switch rule.strategy {
+        case .none:
+            Image(systemName: "arrow.triangle.branch")
+                .frame(width: 16, height: 16)
+        case .ignored:
+            Image(systemName: "eye.slash")
+                .frame(width: 16, height: 16)
+        case .followLast:
+            Image(systemName: "clock.arrow.circlepath")
+                .frame(width: 16, height: 16)
+        case let .fixed(inputMethodId):
+            InputMethodIconView(inputMethodId: inputMethodId)
         }
     }
 
@@ -431,20 +500,37 @@ private struct AppRuleSettingsRow: View {
     }
 }
 
+@MainActor
 private struct LaunchStrategyMenuContent: View {
     let strategy: AppLaunchStrategy
     let inputMethods: [InputMethod]
     let onSelect: (AppLaunchStrategy) -> Void
 
     var body: some View {
-        option("settings.apps.inherit_global", strategy: .inherit)
-        option("settings.apps.no_switch", strategy: .none)
-        option("input_method.follow_last_option", strategy: followLastStrategy)
+        option(Text("settings.apps.inherit_global"), systemImage: "arrow.triangle.branch", strategy: .inherit)
+        option(Text("settings.apps.no_switch"), systemImage: "nosign", strategy: .none)
+        option(Text("input_method.follow_last_option"), systemImage: "clock.arrow.circlepath", strategy: followLastStrategy)
 
         Divider()
 
         ForEach(inputMethods) { inputMethod in
-            option(inputMethod.name, strategy: .fixed(inputMethodId: inputMethod.id))
+            option(
+                Text(inputMethod.name),
+                inputMethodId: inputMethod.id,
+                strategy: .fixed(inputMethodId: inputMethod.id)
+            )
+        }
+
+        if let currentInputMethod {
+            Divider()
+            Button {
+                onSelect(.fixed(inputMethodId: currentInputMethod.id))
+            } label: {
+                HStack(spacing: 6) {
+                    InputMethodIconView(inputMethodId: currentInputMethod.id)
+                    Text("settings.apps.use_current_input_method")
+                }
+            }
         }
     }
 
@@ -455,7 +541,17 @@ private struct LaunchStrategyMenuContent: View {
         return .followLast(lastInputMethodId: nil)
     }
 
-    private func option(_ title: String, strategy option: AppLaunchStrategy) -> some View {
+    private var currentInputMethod: InputMethod? {
+        guard let id = try? InputMethodService.getCurrentInputMethodId() else { return nil }
+        return inputMethods.first { $0.id == id }
+    }
+
+    private func option(
+        _ label: Text,
+        systemImage: String? = nil,
+        inputMethodId: String? = nil,
+        strategy option: AppLaunchStrategy
+    ) -> some View {
         Toggle(isOn: Binding(
             get: { strategy == option },
             set: { isSelected in
@@ -463,25 +559,50 @@ private struct LaunchStrategyMenuContent: View {
                 onSelect(option)
             }
         )) {
-            Text(title)
+            HStack(spacing: 6) {
+                if let inputMethodId {
+                    InputMethodIconView(inputMethodId: inputMethodId)
+                } else if let systemImage {
+                    Image(systemName: systemImage)
+                        .frame(width: 16, height: 16)
+                }
+                label
+            }
         }
         .toggleStyle(.checkbox)
     }
 }
 
+@MainActor
 private struct ActivationStrategyMenuContent: View {
     let strategy: InputMethodStrategy
     let inputMethods: [InputMethod]
     let onSelect: (InputMethodStrategy) -> Void
 
     var body: some View {
-        option("settings.apps.inherit_global", strategy: .none)
-        option("input_method.follow_last_option", strategy: followLastStrategy)
+        option(Text("settings.apps.inherit_global"), systemImage: "arrow.triangle.branch", strategy: .none)
+        option(Text("input_method.follow_last_option"), systemImage: "clock.arrow.circlepath", strategy: followLastStrategy)
 
         Divider()
 
         ForEach(inputMethods) { inputMethod in
-            option(inputMethod.name, strategy: .fixed(inputMethodId: inputMethod.id))
+            option(
+                Text(inputMethod.name),
+                inputMethodId: inputMethod.id,
+                strategy: .fixed(inputMethodId: inputMethod.id)
+            )
+        }
+
+        if let currentInputMethod {
+            Divider()
+            Button {
+                onSelect(.fixed(inputMethodId: currentInputMethod.id))
+            } label: {
+                HStack(spacing: 6) {
+                    InputMethodIconView(inputMethodId: currentInputMethod.id)
+                    Text("settings.apps.use_current_input_method")
+                }
+            }
         }
     }
 
@@ -492,7 +613,17 @@ private struct ActivationStrategyMenuContent: View {
         return .followLast(lastInputMethodId: nil)
     }
 
-    private func option(_ title: String, strategy option: InputMethodStrategy) -> some View {
+    private var currentInputMethod: InputMethod? {
+        guard let id = try? InputMethodService.getCurrentInputMethodId() else { return nil }
+        return inputMethods.first { $0.id == id }
+    }
+
+    private func option(
+        _ label: Text,
+        systemImage: String? = nil,
+        inputMethodId: String? = nil,
+        strategy option: InputMethodStrategy
+    ) -> some View {
         Toggle(isOn: Binding(
             get: { strategy == option },
             set: { isSelected in
@@ -500,7 +631,15 @@ private struct ActivationStrategyMenuContent: View {
                 onSelect(option)
             }
         )) {
-            Text(title)
+            HStack(spacing: 6) {
+                if let inputMethodId {
+                    InputMethodIconView(inputMethodId: inputMethodId)
+                } else if let systemImage {
+                    Image(systemName: systemImage)
+                        .frame(width: 16, height: 16)
+                }
+                label
+            }
         }
         .toggleStyle(.checkbox)
     }
@@ -1389,6 +1528,88 @@ private struct SettingsPlaceholderPane: View {
         }
         .frame(maxWidth: .infinity, minHeight: 260)
         .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+private struct SettingsWindowConfigurator: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        SettingsWindowConfiguratorView()
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        (nsView as? SettingsWindowConfiguratorView)?.configureWindow()
+    }
+}
+
+private final class SettingsWindowConfiguratorView: NSView {
+    private var windowObservers: [NSObjectProtocol] = []
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        configureWindow()
+        observeWindow()
+    }
+
+    deinit {
+        removeWindowObservers()
+    }
+
+    override func layout() {
+        super.layout()
+        configureWindow()
+    }
+
+    private func observeWindow() {
+        removeWindowObservers()
+        guard let window else { return }
+
+        let center = NotificationCenter.default
+        let names: [Notification.Name] = [
+            NSWindow.didBecomeKeyNotification,
+            NSWindow.didUpdateNotification,
+            NSWindow.didResizeNotification,
+            NSWindow.didEndLiveResizeNotification,
+        ]
+        for name in names {
+            windowObservers.append(center.addObserver(
+                forName: name,
+                object: window,
+                queue: .main
+            ) { [weak self] _ in
+                self?.configureWindow()
+            })
+        }
+    }
+
+    private func removeWindowObservers() {
+        let center = NotificationCenter.default
+        for observer in windowObservers {
+            center.removeObserver(observer)
+        }
+        windowObservers.removeAll()
+    }
+
+    func configureWindow() {
+        guard let window else { return }
+
+        if !window.styleMask.contains(.fullSizeContentView) {
+            window.styleMask.insert(.fullSizeContentView)
+        }
+        if window.titleVisibility != .hidden {
+            window.titleVisibility = .hidden
+        }
+        if !window.titlebarAppearsTransparent {
+            window.titlebarAppearsTransparent = true
+        }
+        if window.titlebarSeparatorStyle != .none {
+            window.titlebarSeparatorStyle = .none
+        }
+        if window.toolbar != nil {
+            window.toolbar = nil
+        }
+        if !window.isMovableByWindowBackground {
+            window.isMovableByWindowBackground = true
+        }
     }
 }
 

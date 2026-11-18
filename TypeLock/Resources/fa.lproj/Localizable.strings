@@ -210,3 +210,5 @@
 "settings.indicator.reset_colors" = "پاک کردن رنگ‌ها";
 "settings.reliability.cursor_lag_fix" = "رفع تأخیر تایپ/مکان‌نما";
 "settings.reliability.cursor_lag_fix.description" = "مکان‌نمای آزمایشی macOS 14 را غیرفعال می‌کند. نیاز به تأیید مدیر دارد و ممکن است به راه‌اندازی مجدد برنامه نیاز باشد.";
+
+"settings.apps.use_current_input_method" = "استفاده از منبع ورودی فعلی";

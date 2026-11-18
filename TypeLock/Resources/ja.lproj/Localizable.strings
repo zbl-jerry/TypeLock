@@ -210,3 +210,5 @@
 "settings.indicator.reset_colors" = "色をクリア";
 "settings.reliability.cursor_lag_fix" = "入力/カーソルの遅延を修正";
 "settings.reliability.cursor_lag_fix.description" = "macOS 14 の実験的なテキストカーソルを無効にします。管理者の承認が必要で、アプリの再起動が必要な場合があります。";
+
+"settings.apps.use_current_input_method" = "現在の入力ソースを使用";

@@ -8,10 +8,10 @@ enum PermissionStatus: Equatable, Sendable {
     case denied
 }
 
-/// Phase 0 permission skeleton.
+/// Permission checks used by the settings and terminal flows.
 ///
 /// Accessibility and Input Monitoring are checked lazily; Apple Events cannot
-/// be queried ahead of time and will be handled by the terminal feature.
+/// be queried ahead of time and are handled by the terminal feature.
 enum PermissionService {
     static var accessibilityStatus: PermissionStatus {
         AXIsProcessTrusted() ? .granted : .denied

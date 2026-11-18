@@ -251,3 +251,5 @@
 
 "settings.reliability.cursor_lag_fix" = "修复输入/光标卡顿";
 "settings.reliability.cursor_lag_fix.description" = "关闭 macOS 14 的实验性文本光标，需要管理员授权；可能需要重新启动相关应用。";
+
+"settings.apps.use_current_input_method" = "使用当前输入法";

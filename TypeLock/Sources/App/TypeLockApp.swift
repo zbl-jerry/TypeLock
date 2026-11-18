@@ -99,6 +99,7 @@ struct TypeLockApp: App {
         Settings {
             SettingsRootView(store: store)
         }
+        .windowStyle(.hiddenTitleBar)
     }
 }
 

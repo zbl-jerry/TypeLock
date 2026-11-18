@@ -251,3 +251,5 @@
 
 "settings.reliability.cursor_lag_fix" = "修復輸入/游標卡頓";
 "settings.reliability.cursor_lag_fix.description" = "關閉 macOS 14 的實驗性文字游標，需要管理員授權；可能需要重新啟動相關應用程式。";
+
+"settings.apps.use_current_input_method" = "使用目前輸入法";

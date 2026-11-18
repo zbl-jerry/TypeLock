@@ -4,5 +4,5 @@
 --indent 4
 --ifdef no-indent
 --linebreaks lf
---exclude .build,Derived,Tuist/.build
+--exclude .build,Derived,DerivedData,Tuist/.build
 --rules blankLineAfterImports,blankLinesAroundMark,blankLinesAtEndOfScope,blankLinesAtStartOfScope,blankLinesBetweenImports,blankLinesBetweenScopes,braces,consecutiveBlankLines,consecutiveSpaces,duplicateImports,elseOnSameLine,emptyBraces,indent,linebreakAtEndOfFile,linebreaks,sortImports,spaceAroundBraces,spaceAroundBrackets,spaceAroundComments,spaceAroundGenerics,spaceAroundOperators,spaceAroundParens,spaceInsideBraces,spaceInsideBrackets,spaceInsideComments,spaceInsideGenerics,spaceInsideParens,trailingCommas,trailingSpace,wrapArguments,wrapMultilineStatementBraces

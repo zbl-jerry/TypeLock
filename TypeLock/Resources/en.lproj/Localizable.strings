@@ -251,3 +251,5 @@
 
 "settings.reliability.cursor_lag_fix" = "Fix Typing/Cursor Lag";
 "settings.reliability.cursor_lag_fix.description" = "Disables the macOS 14 experimental text cursor. Requires administrator approval; affected apps may need a restart.";
+
+"settings.apps.use_current_input_method" = "Use Current Input Method";
