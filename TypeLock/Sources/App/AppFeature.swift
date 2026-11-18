@@ -103,7 +103,9 @@ struct AppFeature {
         case restoreIgnoredAppTapped(bundleId: String)
         case retryCurrentAppTapped
         case setFallbackStrategy(InputMethodStrategy)
+        case setFallbackLaunchStrategy(InputMethodStrategy)
         case setLaunchAtLogin(Bool)
+        case setLaunchStrategy(bundleId: String, strategy: AppLaunchStrategy)
         case setStrategy(bundleId: String, strategy: InputMethodStrategy)
     }
 
@@ -290,6 +292,17 @@ struct AppFeature {
                 }
                 return .none
 
+            case .view(.setFallbackLaunchStrategy(let strategy)):
+                state.$fallbackRuleStore.withLock { store in
+                    let supportedStrategy = SwitchResolver.normalizedLaunch(strategy)
+                    guard store.launchStrategy != supportedStrategy else {
+                        return
+                    }
+
+                    store.launchStrategy = supportedStrategy
+                }
+                return .none
+
             case .view(.setLaunchAtLogin(let isEnabled)):
                 state.launchAtLoginStatus = isEnabled ? .enabled : .disabled
                 return .run { send in
@@ -321,8 +334,35 @@ struct AppFeature {
                 }
                 return .none
 
-            case .system(.workspaceEvent(.launched)):
-                return refreshRunningAppsEffect()
+            case let .view(.setLaunchStrategy(bundleId, strategy)):
+                let updateDate = now
+                let fallbackAppInfo = state.runningApps.first(where: { $0.bundleId == bundleId })
+                state.$appRulesStore.withLock { store in
+                    let currentRule = store.rules[bundleId] ?? AppRuleRecord(
+                        bundleId: bundleId,
+                        lastKnownPath: fallbackAppInfo?.path,
+                        lastKnownName: fallbackAppInfo?.name ?? bundleId,
+                        strategy: .none,
+                        createdAt: updateDate,
+                        updatedAt: updateDate
+                    )
+
+                    guard currentRule.launchStrategy != strategy || store.rules[bundleId] == nil else {
+                        return
+                    }
+
+                    var updatedRule = currentRule
+                    updatedRule.launchStrategy = strategy
+                    updatedRule.updatedAt = updateDate
+                    store.rules[bundleId] = updatedRule
+                }
+                return .none
+
+            case .system(.workspaceEvent(.launched(let appInfo))):
+                return .merge(
+                    reduceSwitching(.applicationLaunched(appInfo), state: &state),
+                    refreshRunningAppsEffect()
+                )
 
             case .system(.workspaceEvent(.terminated(let bundleId))):
                 return .merge(
@@ -377,10 +417,14 @@ struct AppFeature {
     private func normalizeFallbackRule(in state: inout State) {
         state.$fallbackRuleStore.withLock { store in
             let supportedStrategy = fallbackSupportedStrategy(store.strategy)
-            guard store.strategy != supportedStrategy else {
-                return
+            if store.strategy != supportedStrategy {
+                store.strategy = supportedStrategy
             }
-            store.strategy = supportedStrategy
+
+            let supportedLaunchStrategy = SwitchResolver.normalizedLaunch(store.launchStrategy)
+            if store.launchStrategy != supportedLaunchStrategy {
+                store.launchStrategy = supportedLaunchStrategy
+            }
         }
     }
 }

@@ -28,6 +28,25 @@ struct SettingsView: View {
             }
         }
 
+        Menu {
+            InputMethodStrategyMenuContent(
+                context: .launchFallback,
+                strategy: store.fallbackLaunchStrategy,
+                inputMethods: store.inputMethods,
+                defaultOptionSubtitle: nil,
+                followLastOptionSubtitle: nil,
+                unavailableFixedOptionLabel: store.fallbackLaunchSelectedLabel
+            ) { strategy in
+                store.send(.view(.setFallbackLaunchStrategy(strategy)))
+            }
+        } label: {
+            Label("settings.general.launch_input_method", systemImage: "power")
+            if let selectedLabel = store.fallbackLaunchSelectedLabel {
+                Text(selectedLabel)
+                    .foregroundStyle(store.fallbackLaunchIsSelectedSubtitleSecondary ? .secondary : .primary)
+            }
+        }
+
         Toggle(
             TypeLockStrings.Settings.General.autoLaunch,
             isOn: Binding(

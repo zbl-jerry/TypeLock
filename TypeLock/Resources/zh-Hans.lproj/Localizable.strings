@@ -134,3 +134,5 @@
 "settings.about.version" = "版本";
 "settings.about.project_homepage" = "项目主页";
 "settings.about.report_issue" = "报告问题…";
+
+"settings.general.launch_input_method" = "启动时输入法";

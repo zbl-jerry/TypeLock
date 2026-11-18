@@ -65,6 +65,75 @@ final class SwitchingFeatureTests: XCTestCase {
         XCTAssertEqual(switchedInputMethods, [targetInputMethod])
     }
 
+    func testLaunchedAppUsesLaunchStrategyOnFirstActivation() async {
+        let app = AppInfo(bundleId: "com.test.editor", name: "Editor", path: "/Applications/Editor.app")
+        let launchInputMethod = InputMethod(id: "ime.en", name: "English")
+        let activationInputMethod = InputMethod(id: "ime.zh", name: "Chinese")
+        let timestamp = Date(timeIntervalSince1970: 10)
+        let recorder = SwitchRecorder()
+
+        var initialState = makeState()
+        initialState.inputMethods = [launchInputMethod, activationInputMethod]
+        initialState.$appRulesStore.withLock {
+            $0.rules[app.bundleId] = AppRuleRecord(
+                bundleId: app.bundleId,
+                lastKnownPath: app.path,
+                lastKnownName: app.name,
+                strategy: .fixed(inputMethodId: activationInputMethod.id),
+                launchStrategy: .fixed(inputMethodId: launchInputMethod.id),
+                createdAt: timestamp,
+                updatedAt: timestamp
+            )
+        }
+
+        let store = TestStore(initialState: initialState) {
+            SwitchingFeature()
+        }
+        store.dependencies.date = .constant(timestamp)
+        store.dependencies.inputMethodClient.currentInputMethodId = { activationInputMethod.id }
+        store.dependencies.inputMethodClient.switchToInputMethod = { inputMethodId in
+            await recorder.record(inputMethodId)
+        }
+
+        await store.send(.applicationLaunched(app)) {
+            $0.launchCandidates[app.bundleId] = timestamp
+        }
+
+        await store.send(.applicationActivated(app)) {
+            $0.currentFrontmostBundleId = app.bundleId
+            $0.launchCandidates = [:]
+            $0.nextSwitchAttemptID = 1
+            $0.pendingProgrammaticSwitch = .init(
+                appName: app.name,
+                bundleId: app.bundleId,
+                inputMethodId: launchInputMethod.id,
+                inputMethodName: launchInputMethod.name
+            )
+        }
+
+        await store.receive(.response(.programmaticSwitchFinished(
+            attemptID: 0,
+            outcome: .switched
+        ))) {
+            $0.pendingProgrammaticSwitch = nil
+            $0.lastSwitchAttempt = .init(
+                appName: app.name,
+                bundleId: app.bundleId,
+                inputMethodId: launchInputMethod.id,
+                inputMethodName: launchInputMethod.name,
+                outcome: .switched,
+                ruleSource: .app,
+                timestamp: timestamp
+            )
+            $0.$appSwitchStatisticsStore.withLock {
+                $0.counts[app.bundleId] = 1
+            }
+        }
+
+        let switchedInputMethods = await recorder.values
+        XCTAssertEqual(switchedInputMethods, [launchInputMethod.id])
+    }
+
     func testInputMethodRefreshRetriesActivationSkippedWhileCatalogIsLoading() async {
         let app = AppInfo(bundleId: "com.test.editor", name: "Editor", path: "/Applications/Editor.app")
         let inputMethod = InputMethod(id: "ime.en", name: "English")

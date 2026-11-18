@@ -110,7 +110,7 @@ struct InputMethodStrategyMenuContent: View {
         switch context {
         case .appRule:
             return TypeLockStrings.InputMethod.appDefaultOption
-        case .fallbackRule:
+        case .fallbackRule, .launchFallback:
             return TypeLockStrings.InputMethod.fallbackDefaultOption
         }
     }
@@ -126,10 +126,11 @@ struct InputMethodStrategyMenuContent: View {
 enum InputMethodStrategyMenuContext {
     case appRule
     case fallbackRule
+    case launchFallback
 
     var supportsFollowLast: Bool {
         switch self {
-        case .appRule:
+        case .appRule, .launchFallback:
             return true
         case .fallbackRule:
             return false

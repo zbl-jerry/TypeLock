@@ -61,4 +61,54 @@ final class SwitchResolverTests: XCTestCase {
         XCTAssertEqual(resolution.strategy, .none)
         XCTAssertEqual(resolution.source, .fallback)
     }
+
+    func testLaunchInheritsGlobalFixedStrategy() {
+        let resolution = SwitchResolver.resolveLaunch(
+            appStrategy: .inherit,
+            globalStrategy: .fixed(inputMethodId: "ime.abc")
+        )
+
+        XCTAssertEqual(resolution.strategy, .fixed(inputMethodId: "ime.abc"))
+        XCTAssertEqual(resolution.source, .fallback)
+    }
+
+    func testLaunchInheritsGlobalFollowLastStrategy() {
+        let resolution = SwitchResolver.resolveLaunch(
+            appStrategy: .inherit,
+            globalStrategy: .followLast(lastInputMethodId: "ime.zh")
+        )
+
+        XCTAssertEqual(resolution.strategy, .followLast(lastInputMethodId: "ime.zh"))
+        XCTAssertEqual(resolution.source, .fallback)
+    }
+
+    func testLaunchNoneOverridesGlobalStrategy() {
+        let resolution = SwitchResolver.resolveLaunch(
+            appStrategy: .none,
+            globalStrategy: .fixed(inputMethodId: "ime.abc")
+        )
+
+        XCTAssertEqual(resolution.strategy, .none)
+        XCTAssertEqual(resolution.source, .app)
+    }
+
+    func testLaunchFixedOverridesGlobalStrategy() {
+        let resolution = SwitchResolver.resolveLaunch(
+            appStrategy: .fixed(inputMethodId: "ime.japanese"),
+            globalStrategy: .fixed(inputMethodId: "ime.abc")
+        )
+
+        XCTAssertEqual(resolution.strategy, .fixed(inputMethodId: "ime.japanese"))
+        XCTAssertEqual(resolution.source, .app)
+    }
+
+    func testLaunchGlobalIgnoredNormalizesToNoSwitch() {
+        let resolution = SwitchResolver.resolveLaunch(
+            appStrategy: .inherit,
+            globalStrategy: .ignored
+        )
+
+        XCTAssertEqual(resolution.strategy, .none)
+        XCTAssertEqual(resolution.source, .fallback)
+    }
 }

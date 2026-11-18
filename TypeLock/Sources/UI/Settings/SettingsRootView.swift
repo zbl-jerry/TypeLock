@@ -134,6 +134,13 @@ private struct GeneralSettingsPane: View {
             }
 
             SettingsRow {
+                Text("settings.general.launch_input_method")
+                Spacer()
+                Text(store.fallbackLaunchSelectedLabel ?? String(localized: "settings.general.fallback_rule.none"))
+                    .foregroundStyle(.secondary)
+            }
+
+            SettingsRow {
                 Text("settings.general.fallback_rule")
                 Spacer()
                 Text(store.fallbackSelectedLabel ?? String(localized: "settings.general.fallback_rule.none"))

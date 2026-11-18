@@ -134,3 +134,5 @@
 "settings.about.version" = "版本";
 "settings.about.project_homepage" = "專案首頁";
 "settings.about.report_issue" = "回報問題…";
+
+"settings.general.launch_input_method" = "啟動時輸入法";

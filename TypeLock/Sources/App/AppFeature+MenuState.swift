@@ -77,8 +77,22 @@ extension AppFeature.State {
 
     var fallbackStrategy: InputMethodStrategy { switching.fallbackStrategy }
 
+    var fallbackLaunchStrategy: InputMethodStrategy { fallbackRuleStore.launchStrategy }
+
     var fallbackSelectedLabel: String? {
         menuSubtitle(for: fallbackStrategy)?.text
+    }
+
+    var fallbackLaunchSelectedLabel: String? {
+        menuSubtitle(for: fallbackLaunchStrategy)?.text
+    }
+
+    var fallbackLaunchIsSelectedSubtitleSecondary: Bool {
+        menuSubtitle(for: fallbackLaunchStrategy)?.isSecondary ?? false
+    }
+
+    func launchStrategy(for bundleId: String) -> AppLaunchStrategy {
+        appRulesStore.rules[bundleId]?.launchStrategy ?? .inherit
     }
 
     var fallbackIsSelectedSubtitleSecondary: Bool {

@@ -124,8 +124,12 @@ final class AppStorageCompatibilityTests: XCTestCase {
         let defaultStore = FallbackRuleStore()
         XCTAssertEqual(defaultStore.v, MigrationVersion.current)
         XCTAssertEqual(defaultStore.strategy, .none)
+        XCTAssertEqual(defaultStore.launchStrategy, .none)
 
-        let store = FallbackRuleStore(strategy: .fixed(inputMethodId: "ime.abc"))
+        let store = FallbackRuleStore(
+            strategy: .fixed(inputMethodId: "ime.abc"),
+            launchStrategy: .followLast(lastInputMethodId: "ime.zh")
+        )
         let data = try JSONEncoder().encode(store)
         let payload = try XCTUnwrap(
             JSONSerialization.jsonObject(with: data) as? [String: Any]
@@ -133,6 +137,18 @@ final class AppStorageCompatibilityTests: XCTestCase {
 
         XCTAssertEqual(payload["v"] as? Int, MigrationVersion.current)
         XCTAssertEqual(try JSONDecoder().decode(FallbackRuleStore.self, from: data), store)
+    }
+
+    func testLegacyFallbackRuleStoreDecodesWithoutLaunchStrategy() throws {
+        let data = Data(
+            #"{"v":1,"strategy":{"fixed":{"inputMethodId":"ime.abc"}}}"#.utf8
+        )
+
+        let store = try JSONDecoder().decode(FallbackRuleStore.self, from: data)
+
+        XCTAssertEqual(store.v, 1)
+        XCTAssertEqual(store.strategy, .fixed(inputMethodId: "ime.abc"))
+        XCTAssertEqual(store.launchStrategy, .none)
     }
 
     func testAppSwitchStatisticsStoreDefaultsAndEncoding() throws {

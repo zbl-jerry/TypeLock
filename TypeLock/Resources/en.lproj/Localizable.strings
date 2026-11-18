@@ -134,3 +134,5 @@
 "settings.about.version" = "Version";
 "settings.about.project_homepage" = "Project Homepage";
 "settings.about.report_issue" = "Report an Issue…";
+
+"settings.general.launch_input_method" = "Launch Input Method";

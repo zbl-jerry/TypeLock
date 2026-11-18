@@ -277,6 +277,90 @@ final class AppFeatureTests: XCTestCase {
         XCTAssertEqual(store.state.fallbackStrategy, .none)
     }
 
+    func testSetFallbackLaunchStrategyAllowsFollowLast() async {
+        var initialState = AppFeature.State()
+        initialState.$fallbackRuleStore.withLock {
+            $0.launchStrategy = .none
+        }
+
+        let store = TestStore(initialState: initialState) {
+            AppFeature()
+        }
+
+        await store.send(.view(.setFallbackLaunchStrategy(.followLast(lastInputMethodId: "ime.jp")))) {
+            $0.$fallbackRuleStore.withLock {
+                $0.launchStrategy = .followLast(lastInputMethodId: "ime.jp")
+            }
+        }
+
+        XCTAssertEqual(
+            store.state.fallbackLaunchStrategy,
+            .followLast(lastInputMethodId: "ime.jp")
+        )
+    }
+
+    func testSetFallbackLaunchStrategyCoercesIgnoredToNone() async {
+        var initialState = AppFeature.State()
+        initialState.$fallbackRuleStore.withLock {
+            $0.launchStrategy = .fixed(inputMethodId: "ime.en")
+        }
+
+        let store = TestStore(initialState: initialState) {
+            AppFeature()
+        }
+
+        await store.send(.view(.setFallbackLaunchStrategy(.ignored))) {
+            $0.$fallbackRuleStore.withLock {
+                $0.launchStrategy = .none
+            }
+        }
+
+        XCTAssertEqual(store.state.fallbackLaunchStrategy, .none)
+    }
+
+    func testSetLaunchStrategyUpdatesOnlyLaunchRule() async {
+        let bundleId = "com.test.editor"
+        let createdAt = Date(timeIntervalSince1970: 100)
+        let updatedAt = Date(timeIntervalSince1970: 200)
+        let newUpdatedAt = Date(timeIntervalSince1970: 300)
+
+        var initialState = AppFeature.State()
+        initialState.$appRulesStore.withLock {
+            $0.rules[bundleId] = AppRuleRecord(
+                bundleId: bundleId,
+                lastKnownPath: "/Applications/Editor.app",
+                lastKnownName: "Editor",
+                strategy: .fixed(inputMethodId: "ime.en"),
+                launchStrategy: .inherit,
+                createdAt: createdAt,
+                updatedAt: updatedAt
+            )
+        }
+
+        let store = TestStore(initialState: initialState) {
+            AppFeature()
+        }
+        store.dependencies.date = .constant(newUpdatedAt)
+
+        await store.send(.view(.setLaunchStrategy(
+            bundleId: bundleId,
+            strategy: .fixed(inputMethodId: "ime.ja")
+        ))) {
+            $0.$appRulesStore.withLock {
+                guard var rule = $0.rules[bundleId] else { return }
+                rule.launchStrategy = .fixed(inputMethodId: "ime.ja")
+                rule.updatedAt = newUpdatedAt
+                $0.rules[bundleId] = rule
+            }
+        }
+
+        let rule = store.state.appRules[bundleId]
+        XCTAssertEqual(rule?.launchStrategy, .fixed(inputMethodId: "ime.ja"))
+        XCTAssertEqual(rule?.activationStrategy, .fixed(inputMethodId: "ime.en"))
+        XCTAssertEqual(rule?.createdAt, createdAt)
+        XCTAssertEqual(rule?.updatedAt, newUpdatedAt)
+    }
+
     func testActivatedAppSwitchesFixedInputMethodWhenNeeded() async {
         let app = AppInfo(bundleId: "com.test.browser", name: "Browser", path: "/Applications/Browser.app")
         let targetInputMethod = "ime.en"

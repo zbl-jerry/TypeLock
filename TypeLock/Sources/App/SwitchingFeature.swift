@@ -72,6 +72,7 @@ struct SwitchingFeature {
         var currentFrontmostBundleId: String?
         var inputMethodCatalogStatus: InputMethodCatalogStatus = .loading
         var inputMethods: [InputMethod] = []
+        var launchCandidates: [String: Date] = [:]
         var lastSwitchAttempt: LastSwitchAttempt?
         var nextFrontmostRetryID = 0
         var nextInputMethodRefreshID = 0
@@ -150,6 +151,7 @@ struct SwitchingFeature {
         case observeInputMethods
         case reloadInputMethods
         case retryCurrentApp
+        case applicationLaunched(AppInfo)
         case applicationActivated(AppInfo)
         case applicationTerminated(bundleId: String)
         case applicationIgnored(bundleId: String)
@@ -319,6 +321,7 @@ struct SwitchingFeature {
                 return .cancel(id: CancelID.programmaticSwitch)
 
             case .applicationTerminated(let bundleId):
+                state.launchCandidates.removeValue(forKey: bundleId)
                 let wasCurrentApp = state.currentFrontmostBundleId == bundleId
                 if wasCurrentApp {
                     state.currentFrontmostBundleId = nil
@@ -331,6 +334,10 @@ struct SwitchingFeature {
                 state.pendingProgrammaticSwitch = nil
                 return .cancel(id: CancelID.programmaticSwitch)
 
+            case .applicationLaunched(let appInfo):
+                state.launchCandidates[appInfo.bundleId] = now
+                return .none
+
             case .applicationActivated(let appInfo):
                 state.pendingFrontmostRetryID = nil
                 return handleActivatedApplication(appInfo, state: &state)
@@ -338,11 +345,14 @@ struct SwitchingFeature {
         }
     }
 
+    private static let launchCandidateLifetime: TimeInterval = 5
+
     private func handleActivatedApplication(_ appInfo: AppInfo, state: inout State) -> Effect<Action> {
         state.currentFrontmostBundleId = appInfo.bundleId
         state.$appRulesStore.withLock { $0.upsertRecord(for: appInfo, at: now) }
+        let isLaunch = consumeLaunchCandidate(for: appInfo.bundleId, state: &state)
 
-        switch resolveSwitchTarget(for: appInfo.bundleId, state: state) {
+        switch resolveSwitchTarget(for: appInfo.bundleId, isLaunch: isLaunch, state: state) {
         case .none:
             state.pendingProgrammaticSwitch = nil
             state.shouldRetryFrontmostAfterInputMethodRefresh = false
@@ -437,11 +447,29 @@ struct SwitchingFeature {
         case waitingForCatalog
     }
 
-    private func resolveSwitchTarget(for bundleId: String, state: State) -> SwitchTargetResolution {
-        let resolution = SwitchResolver.resolveActivation(
-            appStrategy: state.strategy(for: bundleId),
-            fallbackStrategy: state.fallbackRuleStore.strategy
-        )
+    private func consumeLaunchCandidate(for bundleId: String, state: inout State) -> Bool {
+        let cutoff = now.addingTimeInterval(-Self.launchCandidateLifetime)
+        state.launchCandidates = state.launchCandidates.filter { $0.value >= cutoff }
+        return state.launchCandidates.removeValue(forKey: bundleId) != nil
+    }
+
+    private func resolveSwitchTarget(
+        for bundleId: String,
+        isLaunch: Bool,
+        state: State
+    ) -> SwitchTargetResolution {
+        let resolution: SwitchResolver.Resolution
+        if isLaunch {
+            resolution = SwitchResolver.resolveLaunch(
+                appStrategy: state.appRulesStore.rules[bundleId]?.launchStrategy ?? .inherit,
+                globalStrategy: state.fallbackRuleStore.launchStrategy
+            )
+        } else {
+            resolution = SwitchResolver.resolveActivation(
+                appStrategy: state.strategy(for: bundleId),
+                fallbackStrategy: state.fallbackRuleStore.strategy
+            )
+        }
         let strategy = resolution.strategy
         let ruleSource: State.RuleSource = resolution.source == .app ? .app : .fallback
         let candidateId: String?
