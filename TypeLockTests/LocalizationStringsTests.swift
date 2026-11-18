@@ -3,12 +3,12 @@ import XCTest
 
 final class LocalizationStringsTests: XCTestCase {
     func testLocalizableStringFilesHaveMatchingKeys() throws {
-        let keySets = try Dictionary(uniqueKeysWithValues: Self.localizations.map { localization in
+        let keySets = try Dictionary(uniqueKeysWithValues: Self.allLocalizations.map { localization in
             return (localization, try Self.keys(in: Self.fileURL(for: localization)))
         })
         let referenceKeys = try XCTUnwrap(keySets["Base"])
 
-        for localization in Self.localizations.dropFirst() {
+        for localization in Self.allLocalizations.dropFirst() {
             let localizationKeys = try XCTUnwrap(keySets[localization])
             XCTAssertEqual(
                 localizationKeys,
@@ -19,12 +19,12 @@ final class LocalizationStringsTests: XCTestCase {
     }
 
     func testLocalizableStringFilesHaveMatchingPlaceholders() throws {
-        let localizedStrings = try Dictionary(uniqueKeysWithValues: Self.localizations.map { localization in
+        let localizedStrings = try Dictionary(uniqueKeysWithValues: Self.allLocalizations.map { localization in
             return (localization, try Self.strings(in: Self.fileURL(for: localization)))
         })
         let referenceStrings = try XCTUnwrap(localizedStrings["Base"])
 
-        for localization in Self.localizations.dropFirst() {
+        for localization in Self.allLocalizations.dropFirst() {
             let strings = try XCTUnwrap(localizedStrings[localization])
             for key in referenceStrings.keys {
                 let referenceValue = try XCTUnwrap(referenceStrings[key])
@@ -213,6 +213,7 @@ final class LocalizationStringsTests: XCTestCase {
     }
 
     private static let localizations = ["Base", "zh-Hans", "zh-Hant", "en"]
+    private static let allLocalizations = localizations + ["ja", "ko", "fa"]
 
     private static var resourcesURL: URL {
         URL(fileURLWithPath: #filePath)

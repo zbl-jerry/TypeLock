@@ -8,7 +8,7 @@ let buildVersion = Environment.buildVersion.getString(default: "0")
 let project = Project(
     name: "TypeLock",
     options: .options(
-        defaultKnownRegions: ["zh-Hans", "zh-Hant", "en"],
+        defaultKnownRegions: ["zh-Hans", "zh-Hant", "en", "ja", "ko", "fa"],
         developmentRegion: "zh-Hans"
     ),
     packages: [
@@ -49,7 +49,7 @@ let project = Project(
                 "CFBundleDevelopmentRegion": "zh-Hans", // 设置默认开发区域为简体中文
                 "CFBundleIdentifier": "$(PRODUCT_BUNDLE_IDENTIFIER)",
                 "CFBundleInfoDictionaryVersion": "6.0",
-                "CFBundleLocalizations": ["zh-Hans", "zh-Hant", "en"], // 支持的语言列表
+                "CFBundleLocalizations": ["zh-Hans", "zh-Hant", "en", "ja", "ko", "fa"], // 支持的语言列表
                 "CFBundleName": "$(PRODUCT_NAME)",
                 "CFBundlePackageType": "APPL",
                 "AppleLanguages": ["zh-Hans"], // 设置默认语言为简体中文
