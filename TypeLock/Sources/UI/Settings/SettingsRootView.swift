@@ -27,6 +27,8 @@ struct SettingsRootView: View {
                     switch selection ?? .general {
                     case .general:
                         GeneralSettingsPane(store: store)
+                    case .apps:
+                        AppRulesSettingsPane(store: store)
                     case .troubleshooting:
                         TroubleshootingSettingsPane()
                     case .about:
@@ -275,6 +277,211 @@ private struct GeneralSettingsPane: View {
             fallbackRuleStore: store.fallbackRule,
             appSwitchStatisticsStore: store.appSwitchStatistics
         )
+    }
+}
+
+private struct AppRulesSettingsPane: View {
+    let store: StoreOf<AppFeature>
+
+    private var sortedRules: [AppRuleRecord] {
+        store.appRules.values.sorted {
+            $0.lastKnownName.localizedStandardCompare($1.lastKnownName) == .orderedAscending
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if sortedRules.isEmpty {
+                SettingsPlaceholderPane(section: .apps)
+            } else {
+                ForEach(sortedRules) { rule in
+                    AppRuleSettingsRow(
+                        rule: rule,
+                        inputMethods: store.inputMethods,
+                        onSetLaunchStrategy: { strategy in
+                            store.send(.view(.setLaunchStrategy(
+                                bundleId: rule.bundleId,
+                                strategy: strategy
+                            )))
+                        },
+                        onSetActivationStrategy: { strategy in
+                            store.send(.view(.setStrategy(
+                                bundleId: rule.bundleId,
+                                strategy: strategy
+                            )))
+                        }
+                    )
+                }
+            }
+        }
+        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+private struct AppRuleSettingsRow: View {
+    let rule: AppRuleRecord
+    let inputMethods: [InputMethod]
+    let onSetLaunchStrategy: (AppLaunchStrategy) -> Void
+    let onSetActivationStrategy: (InputMethodStrategy) -> Void
+
+    private var appInfo: AppInfo {
+        AppInfo(
+            bundleId: rule.bundleId,
+            name: rule.lastKnownName,
+            path: rule.lastKnownPath
+        )
+    }
+
+    var body: some View {
+        SettingsRow {
+            HStack(spacing: 12) {
+                appInfo.icon
+                    .resizable()
+                    .frame(width: 22, height: 22)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(rule.lastKnownName)
+                    Text(rule.bundleId)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 4) {
+                    Menu {
+                        LaunchStrategyMenuContent(
+                            strategy: rule.launchStrategy,
+                            inputMethods: inputMethods,
+                            onSelect: onSetLaunchStrategy
+                        )
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text("settings.apps.launch")
+                            Text(launchTitle)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    Menu {
+                        ActivationStrategyMenuContent(
+                            strategy: rule.strategy,
+                            inputMethods: inputMethods,
+                            onSelect: onSetActivationStrategy
+                        )
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text("settings.apps.activation")
+                            Text(activationTitle)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+            }
+        }
+    }
+
+    private var launchTitle: String {
+        switch rule.launchStrategy {
+        case .inherit:
+            return String(localized: "settings.apps.inherit_global")
+        case .none:
+            return String(localized: "settings.apps.no_switch")
+        case .followLast:
+            return String(localized: "input_method.follow_last_option")
+        case let .fixed(inputMethodId):
+            return inputMethods.first(where: { $0.id == inputMethodId })?.name ?? inputMethodId
+        }
+    }
+
+    private var activationTitle: String {
+        switch rule.strategy {
+        case .none:
+            return String(localized: "settings.apps.inherit_global")
+        case .ignored:
+            return String(localized: "settings.apps.ignored")
+        case .followLast:
+            return String(localized: "input_method.follow_last_option")
+        case let .fixed(inputMethodId):
+            return inputMethods.first(where: { $0.id == inputMethodId })?.name ?? inputMethodId
+        }
+    }
+}
+
+private struct LaunchStrategyMenuContent: View {
+    let strategy: AppLaunchStrategy
+    let inputMethods: [InputMethod]
+    let onSelect: (AppLaunchStrategy) -> Void
+
+    var body: some View {
+        option("settings.apps.inherit_global", strategy: .inherit)
+        option("settings.apps.no_switch", strategy: .none)
+        option("input_method.follow_last_option", strategy: followLastStrategy)
+
+        Divider()
+
+        ForEach(inputMethods) { inputMethod in
+            option(inputMethod.name, strategy: .fixed(inputMethodId: inputMethod.id))
+        }
+    }
+
+    private var followLastStrategy: AppLaunchStrategy {
+        if case let .followLast(lastInputMethodId) = strategy {
+            return .followLast(lastInputMethodId: lastInputMethodId)
+        }
+        return .followLast(lastInputMethodId: nil)
+    }
+
+    private func option(_ title: String, strategy option: AppLaunchStrategy) -> some View {
+        Toggle(isOn: Binding(
+            get: { strategy == option },
+            set: { isSelected in
+                guard isSelected else { return }
+                onSelect(option)
+            }
+        )) {
+            Text(title)
+        }
+        .toggleStyle(.checkbox)
+    }
+}
+
+private struct ActivationStrategyMenuContent: View {
+    let strategy: InputMethodStrategy
+    let inputMethods: [InputMethod]
+    let onSelect: (InputMethodStrategy) -> Void
+
+    var body: some View {
+        option("settings.apps.inherit_global", strategy: .none)
+        option("input_method.follow_last_option", strategy: followLastStrategy)
+
+        Divider()
+
+        ForEach(inputMethods) { inputMethod in
+            option(inputMethod.name, strategy: .fixed(inputMethodId: inputMethod.id))
+        }
+    }
+
+    private var followLastStrategy: InputMethodStrategy {
+        if case let .followLast(lastInputMethodId) = strategy {
+            return .followLast(lastInputMethodId: lastInputMethodId)
+        }
+        return .followLast(lastInputMethodId: nil)
+    }
+
+    private func option(_ title: String, strategy option: InputMethodStrategy) -> some View {
+        Toggle(isOn: Binding(
+            get: { strategy == option },
+            set: { isSelected in
+                guard isSelected else { return }
+                onSelect(option)
+            }
+        )) {
+            Text(title)
+        }
+        .toggleStyle(.checkbox)
     }
 }
 

@@ -150,3 +150,10 @@
 "settings.backup.import_failed" = "Import Failed";
 "settings.backup.exported" = "Configuration exported.";
 "settings.backup.imported" = "Configuration imported.";
+
+// App rule settings
+"settings.apps.launch" = "Launch";
+"settings.apps.activation" = "Activation";
+"settings.apps.inherit_global" = "Inherit Global";
+"settings.apps.no_switch" = "No Switch";
+"settings.apps.ignored" = "Excluded";

@@ -150,3 +150,10 @@
 "settings.backup.import_failed" = "匯入失敗";
 "settings.backup.exported" = "設定已匯出";
 "settings.backup.imported" = "設定已匯入";
+
+// App 規則設定
+"settings.apps.launch" = "啟動";
+"settings.apps.activation" = "啟用";
+"settings.apps.inherit_global" = "繼承全域";
+"settings.apps.no_switch" = "不切換";
+"settings.apps.ignored" = "已排除";
