@@ -136,3 +136,17 @@
 "settings.about.report_issue" = "回報問題…";
 
 "settings.general.launch_input_method" = "啟動時輸入法";
+
+// 設定備份
+"settings.backup.title" = "設定備份";
+"settings.backup.export" = "匯出設定…";
+"settings.backup.import" = "匯入設定…";
+"settings.backup.merge" = "合併匯入";
+"settings.backup.replace" = "取代匯入";
+"settings.backup.cancel" = "取消";
+"settings.backup.import_title" = "匯入設定";
+"settings.backup.import_message" = "合併會保留目前規則並覆寫衝突項目；取代會清除目前規則。";
+"settings.backup.export_failed" = "匯出失敗";
+"settings.backup.import_failed" = "匯入失敗";
+"settings.backup.exported" = "設定已匯出";
+"settings.backup.imported" = "設定已匯入";

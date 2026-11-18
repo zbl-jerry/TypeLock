@@ -1,6 +1,7 @@
 import AppKit
 import ComposableArchitecture
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Phase 0 settings window shell.
 ///
@@ -111,6 +112,8 @@ enum SettingsSection: String, CaseIterable, Identifiable, Hashable {
 private struct GeneralSettingsPane: View {
     let store: StoreOf<AppFeature>
 
+    @State private var backupMessage: String?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             SettingsRow {
@@ -160,8 +163,118 @@ private struct GeneralSettingsPane: View {
                 Text("\(MigrationVersion.current)")
                     .foregroundStyle(.secondary)
             }
+
+            SettingsRow {
+                Text("settings.backup.title")
+                Spacer()
+                Button("settings.backup.export") {
+                    exportSettings()
+                }
+                Button("settings.backup.import") {
+                    importSettings()
+                }
+            }
+
+            if let backupMessage {
+                SettingsHint {
+                    Text(backupMessage)
+                }
+            }
         }
         .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    @MainActor
+    private func exportSettings() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.nameFieldStringValue = "TypeLock-Config.json"
+        panel.canCreateDirectories = true
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        do {
+            try SettingsBackupService.write(makeBackup(), to: url)
+            backupMessage = String(localized: "settings.backup.exported")
+        } catch {
+            presentError(title: String(localized: "settings.backup.export_failed"), error: error)
+        }
+    }
+
+    @MainActor
+    private func importSettings() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        do {
+            let backup = try SettingsBackupService.read(from: url)
+            guard let mode = chooseImportMode() else { return }
+            let payload = try backup.payload(mode: mode, current: makeCurrentPayload())
+            store.send(.view(.applySettingsImport(payload)))
+            backupMessage = String(localized: "settings.backup.imported")
+        } catch {
+            presentError(title: String(localized: "settings.backup.import_failed"), error: error)
+        }
+    }
+
+    @MainActor
+    private func chooseImportMode() -> SettingsImportMode? {
+        let alert = NSAlert()
+        alert.messageText = String(localized: "settings.backup.import_title")
+        alert.informativeText = String(localized: "settings.backup.import_message")
+        alert.addButton(withTitle: String(localized: "settings.backup.merge"))
+        alert.addButton(withTitle: String(localized: "settings.backup.replace"))
+        alert.addButton(withTitle: String(localized: "settings.backup.cancel"))
+
+        switch alert.runModal() {
+        case .alertFirstButtonReturn:
+            return .merge
+        case .alertSecondButtonReturn:
+            return .replace
+        default:
+            return nil
+        }
+    }
+
+    @MainActor
+    private func presentError(title: String, error: Error) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = error.localizedDescription
+        alert.alertStyle = .warning
+        alert.runModal()
+    }
+
+    private func makeBackup() -> SettingsBackup {
+        SettingsBackup(
+            appRulesStore: AppRulesStore(
+                v: MigrationVersion.current,
+                rules: store.appRules
+            ),
+            fallbackRuleStore: store.fallbackRule,
+            statistics: store.appSwitchStatistics,
+            appVersion: Bundle.main.object(
+                forInfoDictionaryKey: "CFBundleShortVersionString"
+            ) as? String ?? "unknown",
+            buildVersion: Bundle.main.object(
+                forInfoDictionaryKey: "CFBundleVersion"
+            ) as? String ?? "unknown"
+        )
+    }
+
+    private func makeCurrentPayload() -> SettingsImportPayload {
+        SettingsImportPayload(
+            appRulesStore: AppRulesStore(
+                v: MigrationVersion.current,
+                rules: store.appRules
+            ),
+            fallbackRuleStore: store.fallbackRule,
+            appSwitchStatisticsStore: store.appSwitchStatistics
+        )
     }
 }
 

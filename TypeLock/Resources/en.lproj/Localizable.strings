@@ -136,3 +136,17 @@
 "settings.about.report_issue" = "Report an Issue…";
 
 "settings.general.launch_input_method" = "Launch Input Method";
+
+// Configuration backup
+"settings.backup.title" = "Configuration Backup";
+"settings.backup.export" = "Export Configuration…";
+"settings.backup.import" = "Import Configuration…";
+"settings.backup.merge" = "Merge Import";
+"settings.backup.replace" = "Replace Import";
+"settings.backup.cancel" = "Cancel";
+"settings.backup.import_title" = "Import Configuration";
+"settings.backup.import_message" = "Merge keeps current rules and lets imported rules win. Replace clears current rules.";
+"settings.backup.export_failed" = "Export Failed";
+"settings.backup.import_failed" = "Import Failed";
+"settings.backup.exported" = "Configuration exported.";
+"settings.backup.imported" = "Configuration imported.";

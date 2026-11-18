@@ -31,6 +31,14 @@ extension AppFeature.State {
         appRulesStore.rules
     }
 
+    var fallbackRule: FallbackRuleStore {
+        fallbackRuleStore
+    }
+
+    var appSwitchStatistics: AppSwitchStatisticsStore {
+        appSwitchStatisticsStore
+    }
+
     var menuBarIconSystemName: String {
         if inputMethodDiagnostic != nil {
             return "exclamationmark.triangle"
