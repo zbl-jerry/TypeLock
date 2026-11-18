@@ -331,7 +331,7 @@ final class AppFeatureTests: XCTestCase {
             excluded: true
         ))) {
             $0.$exclusionsStore.withLock {
-                $0.switchingBundleIds.insert("com.test.terminal")
+                _ = $0.switchingBundleIds.insert("com.test.terminal")
             }
         }
 
@@ -340,7 +340,7 @@ final class AppFeatureTests: XCTestCase {
             excluded: true
         ))) {
             $0.$exclusionsStore.withLock {
-                $0.indicatorBundleIds.insert("com.test.chat")
+                _ = $0.indicatorBundleIds.insert("com.test.chat")
             }
         }
 
@@ -1361,7 +1361,7 @@ final class AppFeatureTests: XCTestCase {
                 $0.rules[app.bundleId] = rule
             }
             $0.$exclusionsStore.withLock {
-                $0.switchingBundleIds.insert(app.bundleId)
+                _ = $0.switchingBundleIds.insert(app.bundleId)
             }
         }
 
@@ -1922,7 +1922,7 @@ final class AppFeatureTests: XCTestCase {
                     $0.rules[app.bundleId] = rule
                 }
                 $0.$exclusionsStore.withLock {
-                    $0.switchingBundleIds.insert(app.bundleId)
+                    _ = $0.switchingBundleIds.insert(app.bundleId)
                 }
             }
 
@@ -1977,7 +1977,7 @@ final class AppFeatureTests: XCTestCase {
                 $0.rules[bundleId] = rule
             }
             $0.$exclusionsStore.withLock {
-                $0.switchingBundleIds.insert(bundleId)
+                _ = $0.switchingBundleIds.insert(bundleId)
             }
         }
 
@@ -2066,7 +2066,7 @@ final class AppFeatureTests: XCTestCase {
                 )
             }
             $0.$exclusionsStore.withLock {
-                $0.switchingBundleIds.insert(app.bundleId)
+                _ = $0.switchingBundleIds.insert(app.bundleId)
             }
         }
 
