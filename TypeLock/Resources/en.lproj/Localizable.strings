@@ -1,0 +1,98 @@
+// Menu
+"menu.quit" = "Quit TypeLock";
+"menu.accessibility_configured" = "TypeLock, current app configured";
+"menu.accessibility_unconfigured" = "TypeLock, current app unconfigured";
+"menu.accessibility_ignored" = "TypeLock, current app ignored";
+"menu.accessibility_warning" = "TypeLock, input method warning";
+"menu.accessibility_warning_configured" = "TypeLock, input method warning, current app configured";
+"menu.accessibility_warning_unconfigured" = "TypeLock, input method warning, current app unconfigured";
+"menu.accessibility_warning_ignored" = "TypeLock, input method warning, current app ignored";
+
+// Common
+"common.cancel" = "Cancel";
+
+// Settings
+"settings.general.auto_launch" = "Launch at Login";
+"settings.general.auto_launch_requires_approval" = "Approve TypeLock in System Settings > General > Login Items.";
+"settings.general.open_login_items" = "Open Login Items Settings";
+"settings.general.check_for_updates" = "Check for Updates…";
+"settings.general.checking_for_updates" = "Checking for Updates…";
+"settings.general.update_available" = "New Version %@ Available…";
+"settings.fallback.default_input_method" = "Default Rule for Unconfigured Apps";
+
+// Support
+"support.version" = "TypeLock v%@";
+"support.help_and_about" = "Help & About";
+"support.project_homepage" = "Project Homepage";
+"support.developer_homepage" = "Developer Profile";
+"support.developer" = "Developer: %@";
+"support.help" = "Help";
+"support.copy_diagnostics" = "Copy Diagnostics";
+"support.report_issue" = "Report an Issue…";
+
+// App List
+"apps.section.current_app" = "Current App";
+"apps.section.running_count" = "Running · Configured (%d)";
+"apps.section.unconfigured_count" = "Running · Unconfigured (%d)";
+"apps.section.configured_count" = "All Configured Apps (%d)";
+"apps.section.unavailable_count" = "Missing Apps (%d)";
+"apps.ignore" = "Ignore This App";
+"apps.ignored.menu_title" = "Ignored Apps (%d)";
+"apps.ignored.restore_hint" = "Select an app to restore";
+"apps.ignored.restore_all" = "Restore All";
+"apps.clear_unavailable" = "Clear Missing Apps";
+"apps.clear_unavailable_confirmation.title" = "Clear missing apps?";
+"apps.clear_unavailable_confirmation.message" = "This removes settings for apps that no longer exist.";
+"apps.clear_unavailable_confirmation.confirm" = "Clear";
+
+// Switches
+"switch_statistics.menu_title" = "Switches (%d)";
+"switch_statistics.app_count" = "%d switches";
+"switch_statistics.empty" = "No switch statistics";
+"switch_statistics.clear" = "Clear Stats";
+"switch_statistics.clear_confirmation.title" = "Clear stats?";
+"switch_statistics.clear_confirmation.message" = "This clears switch counts for all apps without changing input method rules.";
+"switch_statistics.clear_confirmation.confirm" = "Clear";
+
+// Input Method Related
+"input_method.default_section" = "Default";
+"input_method.app_default_option" = "Default";
+"input_method.app_default_fallback_none_option" = "Default (Don't Switch)";
+"input_method.app_default_missing_option" = "Default (Unavailable)";
+"input_method.app_default_with_input_method" = "Default (%@)";
+"input_method.fallback_default_option" = "Don't Switch";
+"input_method.default_option" = "Don't Switch";
+"input_method.follow_last_section" = "Last Switch";
+"input_method.follow_last_app_section" = "Remember This App";
+"input_method.follow_last_fallback_section" = "Last Switch";
+"input_method.follow_last_option" = "Last Switch";
+"input_method.follow_last_empty_option" = "Last Switch";
+"input_method.follow_last_unrecorded_option" = "Not Recorded";
+"input_method.follow_last_with_input_method" = "Last Switch (%@)";
+"input_method.fixed_section" = "Specific Input Method";
+"input_method.deleted_option" = "Input Method Unavailable";
+"input_method.catalog_loading_option" = "Loading Input Methods…";
+"input_method.catalog_unavailable_option" = "Input Method Status Unknown";
+"input_method.follow_last_missing_option" = "Last Switch (Unavailable)";
+"input_method.clear_missing_configuration" = "Clear unavailable settings";
+"input_method.clear_missing_confirmation.title" = "Clear unavailable settings?";
+"input_method.clear_missing_confirmation.message" = "Unavailable items will use the Default Rule for Unconfigured Apps.";
+"input_method.clear_missing_confirmation.confirm" = "Clear";
+
+// Input Method Diagnostics
+"input_method_diagnostics.catalog_empty" = "No Input Methods Available";
+"input_method_diagnostics.catalog_failed" = "Failed to Load Input Methods";
+"input_method_diagnostics.switch_failed" = "Last Automatic Switch Failed";
+"input_method_diagnostics.app" = "App: %@";
+"input_method_diagnostics.target" = "Target Input Method: %@";
+"input_method_diagnostics.reload" = "Reload Input Methods";
+"input_method_diagnostics.retry_current_app" = "Retry Input Method Switch";
+"input_method_diagnostics.open_keyboard_settings" = "Open Keyboard Settings";
+
+// Error Messages
+"error.get_input_methods_failed" = "Failed to get input methods list";
+"error.input_method_not_found" = "Input method not found: %@";
+"error.input_method_not_enabled" = "Input method not enabled: %@";
+"error.switch_input_method_failed" = "Failed to switch input method: %@";
+"error.verify_input_method_failed" = "Could not verify the selected input method: %@";
+"error.get_current_input_method_failed" = "Failed to get current input method";

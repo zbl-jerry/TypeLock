@@ -1,0 +1,262 @@
+import Foundation
+import XCTest
+
+final class LocalizationStringsTests: XCTestCase {
+    func testLocalizableStringFilesHaveMatchingKeys() throws {
+        let keySets = try Dictionary(uniqueKeysWithValues: Self.localizations.map { localization in
+            return (localization, try Self.keys(in: Self.fileURL(for: localization)))
+        })
+        let referenceKeys = try XCTUnwrap(keySets["Base"])
+
+        for localization in Self.localizations.dropFirst() {
+            let localizationKeys = try XCTUnwrap(keySets[localization])
+            XCTAssertEqual(
+                localizationKeys,
+                referenceKeys,
+                "\(localization).lproj/Localizable.strings keys differ from Base"
+            )
+        }
+    }
+
+    func testLocalizableStringFilesHaveMatchingPlaceholders() throws {
+        let localizedStrings = try Dictionary(uniqueKeysWithValues: Self.localizations.map { localization in
+            return (localization, try Self.strings(in: Self.fileURL(for: localization)))
+        })
+        let referenceStrings = try XCTUnwrap(localizedStrings["Base"])
+
+        for localization in Self.localizations.dropFirst() {
+            let strings = try XCTUnwrap(localizedStrings[localization])
+            for key in referenceStrings.keys {
+                let referenceValue = try XCTUnwrap(referenceStrings[key])
+                let localizedValue = try XCTUnwrap(strings[key])
+                XCTAssertEqual(
+                    try Self.placeholders(in: localizedValue),
+                    try Self.placeholders(in: referenceValue),
+                    "\(localization).lproj/Localizable.strings placeholder signature differs for \(key)"
+                )
+            }
+        }
+    }
+
+    func testMenuCopyMatchesSharedAppConventions() throws {
+        let expectedValues: [String: [String: String]] = [
+            "Base": [
+                "menu.accessibility_configured": "TypeLock，当前 App 已配置",
+                "menu.accessibility_unconfigured": "TypeLock，当前 App 未配置",
+                "menu.accessibility_ignored": "TypeLock，当前 App 已忽略",
+                "menu.accessibility_warning": "TypeLock，输入法状态警告",
+                "settings.general.auto_launch": "登录时打开",
+                "settings.general.auto_launch_requires_approval": "请前往“系统设置”>“通用”>“登录项”允许 TypeLock。",
+                "settings.general.open_login_items": "打开登录项设置",
+                "settings.general.check_for_updates": "检查更新…",
+                "settings.general.checking_for_updates": "正在检查更新…",
+                "settings.general.update_available": "新版本 %@ 可用…",
+                "settings.fallback.default_input_method": "未配置 App 的默认规则",
+                "support.version": "TypeLock v%@",
+                "support.help_and_about": "帮助与关于",
+                "support.project_homepage": "项目主页",
+                "support.developer_homepage": "开发者主页",
+                "support.developer": "开发者：%@",
+                "support.help": "使用帮助",
+                "support.copy_diagnostics": "复制诊断信息",
+                "support.report_issue": "报告问题…",
+                "apps.section.running_count": "运行中 · 已配置（%d）",
+                "apps.section.unconfigured_count": "运行中 · 未配置（%d）",
+                "apps.section.configured_count": "全部已配置 App（%d）",
+                "apps.section.unavailable_count": "找不到的 App（%d）",
+                "apps.ignore": "忽略此 App",
+                "apps.ignored.menu_title": "已忽略 App（%d）",
+                "apps.ignored.restore_hint": "选择 App 以恢复",
+                "apps.ignored.restore_all": "恢复全部",
+                "apps.clear_unavailable": "清理找不到的 App",
+                "apps.clear_unavailable_confirmation.title": "清理找不到的 App？",
+                "switch_statistics.menu_title": "切换统计（%d 次）",
+                "input_method.app_default_option": "默认",
+                "input_method.follow_last_option": "记住上次切换",
+                "input_method.follow_last_unrecorded_option": "未记录",
+                "input_method.deleted_option": "输入法不可用",
+                "input_method.catalog_loading_option": "正在读取输入法…",
+                "input_method.catalog_unavailable_option": "输入法状态未知",
+                "input_method_diagnostics.retry_current_app": "重试输入法切换",
+                "input_method.clear_missing_confirmation.message": "失效项会改为跟随未配置 App 的默认规则。",
+            ],
+            "zh-Hans": [
+                "menu.accessibility_configured": "TypeLock，当前 App 已配置",
+                "menu.accessibility_unconfigured": "TypeLock，当前 App 未配置",
+                "menu.accessibility_ignored": "TypeLock，当前 App 已忽略",
+                "menu.accessibility_warning": "TypeLock，输入法状态警告",
+                "settings.general.auto_launch": "登录时打开",
+                "settings.general.auto_launch_requires_approval": "请前往“系统设置”>“通用”>“登录项”允许 TypeLock。",
+                "settings.general.open_login_items": "打开登录项设置",
+                "settings.general.check_for_updates": "检查更新…",
+                "settings.general.checking_for_updates": "正在检查更新…",
+                "settings.general.update_available": "新版本 %@ 可用…",
+                "settings.fallback.default_input_method": "未配置 App 的默认规则",
+                "support.version": "TypeLock v%@",
+                "support.help_and_about": "帮助与关于",
+                "support.project_homepage": "项目主页",
+                "support.developer_homepage": "开发者主页",
+                "support.developer": "开发者：%@",
+                "support.help": "使用帮助",
+                "support.copy_diagnostics": "复制诊断信息",
+                "support.report_issue": "报告问题…",
+                "apps.section.running_count": "运行中 · 已配置（%d）",
+                "apps.section.unconfigured_count": "运行中 · 未配置（%d）",
+                "apps.section.configured_count": "全部已配置 App（%d）",
+                "apps.section.unavailable_count": "找不到的 App（%d）",
+                "apps.ignore": "忽略此 App",
+                "apps.ignored.menu_title": "已忽略 App（%d）",
+                "apps.ignored.restore_hint": "选择 App 以恢复",
+                "apps.ignored.restore_all": "恢复全部",
+                "apps.clear_unavailable": "清理找不到的 App",
+                "apps.clear_unavailable_confirmation.title": "清理找不到的 App？",
+                "switch_statistics.menu_title": "切换统计（%d 次）",
+                "input_method.app_default_option": "默认",
+                "input_method.follow_last_option": "记住上次切换",
+                "input_method.follow_last_unrecorded_option": "未记录",
+                "input_method.deleted_option": "输入法不可用",
+                "input_method.catalog_loading_option": "正在读取输入法…",
+                "input_method.catalog_unavailable_option": "输入法状态未知",
+                "input_method_diagnostics.retry_current_app": "重试输入法切换",
+                "input_method.clear_missing_confirmation.message": "失效项会改为跟随未配置 App 的默认规则。",
+            ],
+            "zh-Hant": [
+                "menu.accessibility_configured": "TypeLock，目前 App 已設定",
+                "menu.accessibility_unconfigured": "TypeLock，目前 App 未設定",
+                "menu.accessibility_ignored": "TypeLock，目前 App 已忽略",
+                "menu.accessibility_warning": "TypeLock，輸入法狀態警告",
+                "settings.general.auto_launch": "登入時開啟",
+                "settings.general.auto_launch_requires_approval": "請前往「系統設定」>「一般」>「登入項目」允許 TypeLock。",
+                "settings.general.open_login_items": "開啟登入項目設定",
+                "settings.general.check_for_updates": "檢查更新…",
+                "settings.general.checking_for_updates": "正在檢查更新…",
+                "settings.general.update_available": "新版本 %@ 可用…",
+                "settings.fallback.default_input_method": "未設定 App 的預設規則",
+                "support.version": "TypeLock v%@",
+                "support.help_and_about": "說明與關於",
+                "support.project_homepage": "專案主頁",
+                "support.developer_homepage": "開發者主頁",
+                "support.developer": "開發者：%@",
+                "support.help": "使用說明",
+                "support.copy_diagnostics": "複製診斷資訊",
+                "support.report_issue": "回報問題…",
+                "apps.section.running_count": "執行中 · 已設定（%d）",
+                "apps.section.unconfigured_count": "執行中 · 未設定（%d）",
+                "apps.section.configured_count": "全部已設定 App（%d）",
+                "apps.section.unavailable_count": "找不到的 App（%d）",
+                "apps.ignore": "忽略此 App",
+                "apps.ignored.menu_title": "已忽略 App（%d）",
+                "apps.ignored.restore_hint": "選擇 App 以恢復",
+                "apps.ignored.restore_all": "恢復全部",
+                "apps.clear_unavailable": "清理找不到的 App",
+                "apps.clear_unavailable_confirmation.title": "清理找不到的 App？",
+                "switch_statistics.menu_title": "切換統計（%d 次）",
+                "input_method.app_default_option": "預設",
+                "input_method.follow_last_option": "記住上次切換",
+                "input_method.follow_last_unrecorded_option": "尚未記錄",
+                "input_method.deleted_option": "輸入法不可用",
+                "input_method.catalog_loading_option": "正在讀取輸入法…",
+                "input_method.catalog_unavailable_option": "輸入法狀態未知",
+                "input_method_diagnostics.retry_current_app": "重試輸入法切換",
+                "input_method.clear_missing_confirmation.message": "失效項會改為跟隨未設定 App 的預設規則。",
+            ],
+            "en": [
+                "menu.accessibility_configured": "TypeLock, current app configured",
+                "menu.accessibility_unconfigured": "TypeLock, current app unconfigured",
+                "menu.accessibility_ignored": "TypeLock, current app ignored",
+                "menu.accessibility_warning": "TypeLock, input method warning",
+                "settings.general.auto_launch": "Launch at Login",
+                "settings.general.auto_launch_requires_approval": "Approve TypeLock in System Settings > General > Login Items.",
+                "settings.general.open_login_items": "Open Login Items Settings",
+                "settings.general.check_for_updates": "Check for Updates…",
+                "settings.general.checking_for_updates": "Checking for Updates…",
+                "settings.general.update_available": "New Version %@ Available…",
+                "settings.fallback.default_input_method": "Default Rule for Unconfigured Apps",
+                "support.version": "TypeLock v%@",
+                "support.help_and_about": "Help & About",
+                "support.project_homepage": "Project Homepage",
+                "support.developer_homepage": "Developer Profile",
+                "support.developer": "Developer: %@",
+                "support.help": "Help",
+                "support.copy_diagnostics": "Copy Diagnostics",
+                "support.report_issue": "Report an Issue…",
+                "apps.section.running_count": "Running · Configured (%d)",
+                "apps.section.unconfigured_count": "Running · Unconfigured (%d)",
+                "apps.section.configured_count": "All Configured Apps (%d)",
+                "apps.section.unavailable_count": "Missing Apps (%d)",
+                "apps.ignore": "Ignore This App",
+                "apps.ignored.menu_title": "Ignored Apps (%d)",
+                "apps.ignored.restore_hint": "Select an app to restore",
+                "apps.ignored.restore_all": "Restore All",
+                "apps.clear_unavailable": "Clear Missing Apps",
+                "apps.clear_unavailable_confirmation.title": "Clear missing apps?",
+                "switch_statistics.menu_title": "Switches (%d)",
+                "input_method.app_default_option": "Default",
+                "input_method.follow_last_option": "Last Switch",
+                "input_method.follow_last_unrecorded_option": "Not Recorded",
+                "input_method.deleted_option": "Input Method Unavailable",
+                "input_method.catalog_loading_option": "Loading Input Methods…",
+                "input_method.catalog_unavailable_option": "Input Method Status Unknown",
+                "input_method_diagnostics.retry_current_app": "Retry Input Method Switch",
+                "input_method.clear_missing_confirmation.message": "Unavailable items will use the Default Rule for Unconfigured Apps.",
+            ],
+        ]
+
+        for localization in Self.localizations {
+            let strings = try Self.strings(in: Self.fileURL(for: localization))
+            let expected = try XCTUnwrap(expectedValues[localization])
+
+            for (key, value) in expected {
+                XCTAssertEqual(strings[key], value, "Unexpected value for \(localization).lproj key \(key)")
+            }
+        }
+    }
+
+    private static let localizations = ["Base", "zh-Hans", "zh-Hant", "en"]
+
+    private static var resourcesURL: URL {
+        URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appending(path: "TypeLock/Resources", directoryHint: .isDirectory)
+    }
+
+    private static func fileURL(for localization: String) -> URL {
+        resourcesURL
+            .appending(path: "\(localization).lproj", directoryHint: .isDirectory)
+            .appending(path: "Localizable.strings")
+    }
+
+    private static func strings(in fileURL: URL) throws -> [String: String] {
+        let data = try Data(contentsOf: fileURL)
+        let propertyList = try PropertyListSerialization.propertyList(from: data, options: [], format: nil)
+        return try XCTUnwrap(propertyList as? [String: String])
+    }
+
+    private static func keys(in fileURL: URL) throws -> Set<String> {
+        let content = try String(contentsOf: fileURL, encoding: .utf8)
+        let keyPattern = #"^\s*"([^"]+)"\s*="#
+        let regex = try NSRegularExpression(pattern: keyPattern, options: [.anchorsMatchLines])
+        let range = NSRange(content.startIndex ..< content.endIndex, in: content)
+
+        return Set(regex.matches(in: content, range: range).compactMap { match in
+            guard let keyRange = Range(match.range(at: 1), in: content) else {
+                return nil
+            }
+            return String(content[keyRange])
+        })
+    }
+
+    private static func placeholders(in value: String) throws -> [String] {
+        let pattern = #"%[@d]"#
+        let regex = try NSRegularExpression(pattern: pattern)
+        let range = NSRange(value.startIndex ..< value.endIndex, in: value)
+
+        return regex.matches(in: value, range: range).compactMap { match in
+            guard let placeholderRange = Range(match.range, in: value) else {
+                return nil
+            }
+            return String(value[placeholderRange])
+        }
+    }
+}

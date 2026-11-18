@@ -21,12 +21,6 @@ jobs:
       id-token: write
       attestations: write
       artifact-metadata: write
-    outputs:
-      tag: ${{ steps.release_tag.outputs.tag }}
-      version: ${{ steps.release_tag.outputs.version }}
-      commit: ${{ steps.release_tag.outputs.commit }}
-      asset_name: ${{ steps.release_artifact.outputs.asset_name }}
-      sha256: ${{ steps.release_artifact.outputs.sha256 }}
 
     steps:
       - name: Checkout
@@ -40,12 +34,11 @@ jobs:
         run: git fetch --force origin "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"
 
       - name: Validate release tag
-        id: release_tag
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           if [[ ! "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
-            echo "::error title=Invalid release tag::Production releases must use vX.Y.Z without leading zeros. Got ${RELEASE_TAG}."
+            echo "::error title=Invalid release tag::Releases must use vX.Y.Z without leading zeros. Got ${RELEASE_TAG}."
             exit 1
           fi
 
@@ -61,24 +54,18 @@ jobs:
             exit 1
           fi
 
-          if ! git merge-base --is-ancestor "$TAG_COMMIT" origin/main; then
-            echo "::error title=Release tag not on main::Tag ${RELEASE_TAG} is not contained in origin/main."
+          if ! git merge-base --is-ancestor "$TAG_COMMIT" origin/dev; then
+            echo "::error title=Release tag not on dev::Tag ${RELEASE_TAG} is not contained in origin/dev."
             exit 1
           fi
 
-          git tag --merged origin/main --list 'v*' |
+          git tag --merged origin/dev --list 'v*' |
             ruby script/validate_release_order.rb "$RELEASE_TAG"
-
-          {
-            echo "tag=$RELEASE_TAG"
-            echo "version=${RELEASE_TAG#v}"
-            echo "commit=$TAG_COMMIT"
-          } >> "$GITHUB_OUTPUT"
 
       - name: Ensure GitHub Release does not already exist
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ steps.release_tag.outputs.tag }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: script/ensure_release_absent.sh "$GITHUB_REPOSITORY" "$RELEASE_TAG"
 
       - name: Check Sparkle signing key
@@ -100,8 +87,10 @@ jobs:
 
       - name: Generate Xcode Project
         env:
-          TUIST_APP_VERSION: ${{ steps.release_tag.outputs.version }}
+          TUIST_APP_VERSION: ${{ github.ref_name }}
         run: |
+          TUIST_APP_VERSION="${TUIST_APP_VERSION#v}"
+          export TUIST_APP_VERSION
           TUIST_BUILD_VERSION=$(date -u "+%Y%m%d%H%M")
           export TUIST_BUILD_VERSION
           tuist generate --no-open
@@ -109,8 +98,8 @@ jobs:
       - name: Test
         run: |
           xcodebuild test \
-            -project TypeSwitch.xcodeproj \
-            -scheme TypeSwitch \
+            -project TypeLock.xcodeproj \
+            -scheme TypeLock \
             -destination "platform=macOS" \
             -skipPackagePluginValidation \
             -skipMacroValidation \
@@ -121,11 +110,11 @@ jobs:
       - name: Archive App
         run: |
           xcodebuild \
-            -project TypeSwitch.xcodeproj \
-            -scheme TypeSwitch \
+            -project TypeLock.xcodeproj \
+            -scheme TypeLock \
             -configuration Release \
             -destination "generic/platform=macOS" \
-            -archivePath ./DerivedData/Archives/TypeSwitch.xcarchive \
+            -archivePath ./DerivedData/Archives/TypeLock.xcarchive \
             -skipPackagePluginValidation \
             -skipMacroValidation \
             archive \
@@ -137,7 +126,7 @@ jobs:
 
       - name: Verify Universal Binary
         run: |
-          BINARY_PATH="DerivedData/Archives/TypeSwitch.xcarchive/Products/Applications/TypeSwitch.app/Contents/MacOS/TypeSwitch"
+          BINARY_PATH="DerivedData/Archives/TypeLock.xcarchive/Products/Applications/TypeLock.app/Contents/MacOS/TypeLock"
           ARCHITECTURES=$(lipo -archs "$BINARY_PATH")
           if [[ " $ARCHITECTURES " != *" arm64 "* || " $ARCHITECTURES " != *" x86_64 "* ]]; then
             echo "::error title=Invalid binary architectures::Expected arm64 and x86_64, got ${ARCHITECTURES}."
@@ -147,12 +136,12 @@ jobs:
       - name: Package App
         run: |
           mkdir -p DerivedData/Exports
-          ditto DerivedData/Archives/TypeSwitch.xcarchive/Products/Applications/TypeSwitch.app DerivedData/Exports/TypeSwitch.app
-          ditto -c -k --sequesterRsrc --keepParent DerivedData/Exports/TypeSwitch.app TypeSwitch-macOS-universal.zip
+          ditto DerivedData/Archives/TypeLock.xcarchive/Products/Applications/TypeLock.app DerivedData/Exports/TypeLock.app
+          ditto -c -k --sequesterRsrc --keepParent DerivedData/Exports/TypeLock.app TypeLock-macOS-universal.zip
 
       - name: Prepare release notes
         env:
-          RELEASE_TAG: ${{ steps.release_tag.outputs.tag }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           if ! awk -v heading="## ${RELEASE_TAG}" '
             $0 == heading { found = 1; next }
@@ -170,12 +159,9 @@ jobs:
           fi
 
       - name: Generate Checksums
-        id: release_artifact
         run: |
-          ASSET_NAME="TypeSwitch-macOS-universal.zip"
+          ASSET_NAME="TypeLock-macOS-universal.zip"
           SHA256=$(shasum -a 256 "$ASSET_NAME" | awk '{print $1}')
-          echo "asset_name=$ASSET_NAME" >> "$GITHUB_OUTPUT"
-          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
 
           {
             echo "### SHA-256 Checksums"
@@ -185,7 +171,7 @@ jobs:
           } > checksums.txt
 
           {
-            echo "## TypeSwitch ${{ steps.release_tag.outputs.tag }}"
+            echo "## TypeLock ${{ github.ref_name }}"
             echo
             cat release-notes.md
             echo
@@ -214,17 +200,17 @@ jobs:
 
       - name: Generate Sparkle appcast
         env:
-          RELEASE_TAG: ${{ steps.release_tag.outputs.tag }}
+          RELEASE_TAG: ${{ github.ref_name }}
           SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
         run: |
           mkdir -p DerivedData/SparkleFeed
-          cp TypeSwitch-macOS-universal.zip DerivedData/SparkleFeed/
-          cp release-notes.md DerivedData/SparkleFeed/TypeSwitch-macOS-universal.md
+          cp TypeLock-macOS-universal.zip DerivedData/SparkleFeed/
+          cp release-notes.md DerivedData/SparkleFeed/TypeLock-macOS-universal.md
 
           printf '%s' "$SPARKLE_ED_PRIVATE_KEY" | ./sparkle-tools/bin/generate_appcast \
             --ed-key-file - \
-            --download-url-prefix "https://github.com/ygsgdbd/TypeSwitch/releases/download/${RELEASE_TAG}/" \
-            --link "https://github.com/ygsgdbd/TypeSwitch" \
+            --download-url-prefix "https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/" \
+            --link "https://github.com/${GITHUB_REPOSITORY}" \
             --embed-release-notes \
             --maximum-versions 1 \
             DerivedData/SparkleFeed
@@ -233,83 +219,25 @@ jobs:
 
       - name: Verify release artifacts
         env:
-          RELEASE_TAG: ${{ steps.release_tag.outputs.tag }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: script/verify_release.sh "$RELEASE_TAG" .
 
       - name: Attest release artifact
         uses: actions/attest@v4
         with:
-          subject-path: TypeSwitch-macOS-universal.zip
+          subject-path: TypeLock-macOS-universal.zip
 
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            TypeSwitch-macOS-universal.zip
+            TypeLock-macOS-universal.zip
             checksums.txt
             appcast.xml
           body_path: release-body.md
           draft: false
           prerelease: false
           overwrite_files: false
-          tag_name: ${{ steps.release_tag.outputs.tag }}
+          tag_name: ${{ github.ref_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  homebrew:
-    name: Update Homebrew cask
-    needs: publish
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout release scripts
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ needs.publish.outputs.commit }}
-
-      - name: Download published release asset
-        env:
-          ASSET_NAME: ${{ needs.publish.outputs.asset_name }}
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ needs.publish.outputs.tag }}
-        run: |
-          mkdir -p release-assets
-          gh release download "$RELEASE_TAG" \
-            --repo "$GITHUB_REPOSITORY" \
-            --dir release-assets \
-            --pattern "$ASSET_NAME"
-
-          ACTUAL_SHA256=$(sha256sum "release-assets/$ASSET_NAME" | awk '{print $1}')
-          if [[ "$ACTUAL_SHA256" != "${{ needs.publish.outputs.sha256 }}" ]]; then
-            echo "::error title=Published asset checksum mismatch::Expected ${{ needs.publish.outputs.sha256 }}, got ${ACTUAL_SHA256}."
-            exit 1
-          fi
-
-      - name: Checkout Homebrew tap
-        uses: actions/checkout@v5
-        with:
-          repository: ygsgdbd/homebrew-tap
-          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          path: homebrew-tap
-
-      - name: Update and push Homebrew cask
-        env:
-          RELEASE_TAG: ${{ needs.publish.outputs.tag }}
-          SHA256: ${{ needs.publish.outputs.sha256 }}
-        run: |
-          ruby script/update_homebrew_cask.rb homebrew-tap/Casks/typeswitch.rb "$RELEASE_TAG" "$SHA256"
-
-          cd homebrew-tap
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Casks/typeswitch.rb
-
-          if git diff --cached --quiet; then
-            echo "Homebrew cask is already up to date."
-            exit 0
-          fi
-
-          git commit -m "Update TypeSwitch cask to ${RELEASE_TAG}"
-          git push

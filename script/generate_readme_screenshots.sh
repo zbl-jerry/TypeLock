@@ -3,14 +3,14 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-DERIVED_DATA_DIR="${TMPDIR:-/tmp}/TypeSwitchReadmeScreenshotsDerived"
-BUILT_APP_PATH="$DERIVED_DATA_DIR/Build/Products/Debug/TypeSwitch.app"
-APP_PATH="$DERIVED_DATA_DIR/TypeSwitchScreenshots.app"
-BINARY_PATH="$APP_PATH/Contents/MacOS/TypeSwitchScreenshots"
+DERIVED_DATA_DIR="${TMPDIR:-/tmp}/TypeLockReadmeScreenshotsDerived"
+BUILT_APP_PATH="$DERIVED_DATA_DIR/Build/Products/Debug/TypeLock.app"
+APP_PATH="$DERIVED_DATA_DIR/TypeLockScreenshots.app"
+BINARY_PATH="$APP_PATH/Contents/MacOS/TypeLockScreenshots"
 RAW_DIR="$ROOT_DIR/Documentation/Screenshots/raw"
 OUTPUT_DIR="$ROOT_DIR/Documentation/Screenshots"
-MENU_WINDOWS_HELPER="${TMPDIR:-/tmp}/typeswitch-readme-menu-windows"
-WINDOW_SNAPSHOT="${TMPDIR:-/tmp}/typeswitch-readme-window-snapshot"
+MENU_WINDOWS_HELPER="${TMPDIR:-/tmp}/typelock-readme-menu-windows"
+WINDOW_SNAPSHOT="${TMPDIR:-/tmp}/typelock-readme-window-snapshot"
 APP_PID=""
 CAPTURE_DIR=""
 DISPLAY_ID=""
@@ -55,8 +55,8 @@ if ! /usr/bin/swift -e 'import ApplicationServices; exit(AXIsProcessTrusted() ? 
     fail "Accessibility permission is required for the terminal or Codex. Enable it in System Settings > Privacy & Security > Accessibility."
 fi
 
-if pgrep -x TypeSwitchScreenshots >/dev/null 2>&1; then
-    fail "A TypeSwitchScreenshots demo is already running. Quit that demo before generating screenshots."
+if pgrep -x TypeLockScreenshots >/dev/null 2>&1; then
+    fail "A TypeLockScreenshots demo is already running. Quit that demo before generating screenshots."
 fi
 
 mkdir -p "$RAW_DIR"
@@ -67,8 +67,8 @@ rtk tuist generate
 
 print "Building README screenshot app..."
 rtk xcodebuild build \
-    -project TypeSwitch.xcodeproj \
-    -scheme TypeSwitch \
+    -project TypeLock.xcodeproj \
+    -scheme TypeLock \
     -configuration Debug \
     -destination 'platform=macOS' \
     -derivedDataPath "$DERIVED_DATA_DIR" \
@@ -78,21 +78,21 @@ rtk xcodebuild build \
     CODE_SIGNING_ALLOWED=NO \
     CODE_SIGNING_REQUIRED=NO
 
-[[ -x "$BUILT_APP_PATH/Contents/MacOS/TypeSwitch" ]] \
-    || fail "Built TypeSwitch executable was not found at $BUILT_APP_PATH."
+[[ -x "$BUILT_APP_PATH/Contents/MacOS/TypeLock" ]] \
+    || fail "Built TypeLock executable was not found at $BUILT_APP_PATH."
 
 print "Preparing isolated screenshot demo..."
 if [[ -e "$APP_PATH" ]]; then
     rm -r "$APP_PATH"
 fi
 /usr/bin/ditto "$BUILT_APP_PATH" "$APP_PATH"
-mv "$APP_PATH/Contents/MacOS/TypeSwitch" "$BINARY_PATH"
+mv "$APP_PATH/Contents/MacOS/TypeLock" "$BINARY_PATH"
 for key in CFBundleExecutable CFBundleName CFBundleDisplayName; do
-    /usr/libexec/PlistBuddy -c "Set :$key TypeSwitchScreenshots" "$APP_PATH/Contents/Info.plist" 2>/dev/null \
-        || /usr/libexec/PlistBuddy -c "Add :$key string TypeSwitchScreenshots" "$APP_PATH/Contents/Info.plist"
+    /usr/libexec/PlistBuddy -c "Set :$key TypeLockScreenshots" "$APP_PATH/Contents/Info.plist" 2>/dev/null \
+        || /usr/libexec/PlistBuddy -c "Add :$key string TypeLockScreenshots" "$APP_PATH/Contents/Info.plist"
 done
 /usr/libexec/PlistBuddy \
-    -c 'Set :CFBundleIdentifier top.ygsgdbd.TypeSwitch.readme-screenshots' \
+    -c 'Set :CFBundleIdentifier io.github.zbl-jerry.TypeLock.readme-screenshots' \
     "$APP_PATH/Contents/Info.plist"
 /usr/bin/codesign --force --deep --sign - "$APP_PATH"
 
@@ -120,11 +120,11 @@ apply_display_info "$($MENU_WINDOWS_HELPER display)"
 wait_for_process() {
     local attempt
     for attempt in {1..100}; do
-        APP_PID="$(pgrep -x TypeSwitchScreenshots | head -n 1 || true)"
+        APP_PID="$(pgrep -x TypeLockScreenshots | head -n 1 || true)"
         [[ -n "$APP_PID" ]] && return 0
         sleep 0.1
     done
-    fail "TypeSwitchScreenshots did not launch."
+    fail "TypeLockScreenshots did not launch."
 }
 
 wait_for_menu_item() {
@@ -144,7 +144,7 @@ on run argv
             repeat with candidateMenuBar in menu bars
                 repeat with candidateItem in menu bar items of candidateMenuBar
                     set itemName to name of candidateItem
-                    if itemName is not "TypeSwitch" and itemName starts with "TypeSwitch" then
+                    if itemName is not "TypeLock" and itemName starts with "TypeLock" then
                         set {itemX, itemY} to position of candidateItem
                         set {itemWidth, itemHeight} to size of candidateItem
                         set centerX to itemX + itemWidth / 2
@@ -157,7 +157,7 @@ on run argv
                     end if
                 end repeat
             end repeat
-            error "TypeSwitch menu bar item was not found on the selected display."
+            error "TypeLock menu bar item was not found on the selected display."
         end tell
     end tell
 end run
@@ -167,7 +167,7 @@ APPLESCRIPT
         fi
         sleep 0.1
     done
-    fail "TypeSwitch menu bar item did not appear."
+    fail "TypeLock menu bar item did not appear."
 }
 
 menu_item_display_info() {
@@ -182,7 +182,7 @@ on run argv
             repeat with candidateMenuBar in menu bars
                 repeat with candidateItem in menu bar items of candidateMenuBar
                     set itemName to name of candidateItem
-                    if itemName is not "TypeSwitch" and itemName starts with "TypeSwitch" then
+                    if itemName is not "TypeLock" and itemName starts with "TypeLock" then
                         set {itemX, itemY} to position of candidateItem
                         set {itemWidth, itemHeight} to size of candidateItem
                         if itemWidth > 0 and itemHeight > 0 then
@@ -191,7 +191,7 @@ on run argv
                     end if
                 end repeat
             end repeat
-            error "A visible TypeSwitch menu bar item was not found."
+            error "A visible TypeLock menu bar item was not found."
         end tell
     end tell
 end run
@@ -206,7 +206,7 @@ APPLESCRIPT
         fi
         sleep 0.1
     done
-    fail "Unable to determine which display hosts the TypeSwitch menu bar item."
+    fail "Unable to determine which display hosts the TypeLock menu bar item."
 }
 
 launch_variant() {
@@ -238,7 +238,7 @@ on run argv
             repeat with candidateMenuBar in menu bars
                 repeat with candidateItem in menu bar items of candidateMenuBar
                     set itemName to name of candidateItem
-                    if itemName is not "TypeSwitch" and itemName starts with "TypeSwitch" then
+                    if itemName is not "TypeLock" and itemName starts with "TypeLock" then
                         set {itemX, itemY} to position of candidateItem
                         set {itemWidth, itemHeight} to size of candidateItem
                         set centerX to itemX + itemWidth / 2
@@ -252,7 +252,7 @@ on run argv
                     end if
                 end repeat
             end repeat
-            error "TypeSwitch menu bar item was not found on the selected display."
+            error "TypeLock menu bar item was not found on the selected display."
         end tell
     end tell
 end run
@@ -274,7 +274,7 @@ on run argv
             repeat with candidateMenuBar in menu bars
                 repeat with candidateItem in menu bar items of candidateMenuBar
                     set itemName to name of candidateItem
-                    if itemName is not "TypeSwitch" and itemName starts with "TypeSwitch" then
+                    if itemName is not "TypeLock" and itemName starts with "TypeLock" then
                         set {itemX, itemY} to position of candidateItem
                         set {itemWidth, itemHeight} to size of candidateItem
                         set centerX to itemX + itemWidth / 2
@@ -290,7 +290,7 @@ on run argv
                     end if
                 end repeat
             end repeat
-            error "TypeSwitch menu bar item was not found on the selected display."
+            error "TypeLock menu bar item was not found on the selected display."
         end tell
     end tell
 end run
@@ -376,7 +376,7 @@ capture_visible_menus() {
     done
     [[ -n "${window_list:-}" ]] || fail "Visible menu windows did not appear."
 
-    CAPTURE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/typeswitch-readme-window-captures.XXXXXX")"
+    CAPTURE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/typelock-readme-window-captures.XXXXXX")"
     local -a capture_paths capture_x capture_y capture_width capture_height
     local -a content_mask_paths content_mask_x content_mask_y
     local row

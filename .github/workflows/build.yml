@@ -1,0 +1,104 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build TypeLock
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.5'
+
+      - name: Install Tuist
+        run: brew install tuist
+
+      - name: Generate Xcode Project
+        env:
+          TUIST_APP_VERSION: '0.0.0'
+        run: |
+          TUIST_BUILD_VERSION=$(date -u "+%Y%m%d%H%M")
+          export TUIST_BUILD_VERSION
+          tuist generate --no-open
+
+      - name: Test
+        run: |
+          xcodebuild test \
+            -project TypeLock.xcodeproj \
+            -scheme TypeLock \
+            -destination "platform=macOS" \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Archive App
+        run: |
+          xcodebuild \
+            -project TypeLock.xcodeproj \
+            -scheme TypeLock \
+            -configuration Release \
+            -destination "generic/platform=macOS" \
+            -archivePath ./DerivedData/Archives/TypeLock.xcarchive \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            archive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            ONLY_ACTIVE_ARCH=NO \
+            ARCHS="arm64 x86_64"
+
+      - name: Verify Universal Binary
+        run: |
+          BINARY_PATH="DerivedData/Archives/TypeLock.xcarchive/Products/Applications/TypeLock.app/Contents/MacOS/TypeLock"
+          ARCHITECTURES=$(lipo -archs "$BINARY_PATH")
+          if [[ " $ARCHITECTURES " != *" arm64 "* || " $ARCHITECTURES " != *" x86_64 "* ]]; then
+            echo "::error title=Invalid binary architectures::Expected arm64 and x86_64, got ${ARCHITECTURES}."
+            exit 1
+          fi
+
+      - name: Package App
+        run: |
+          mkdir -p DerivedData/Exports
+          ditto DerivedData/Archives/TypeLock.xcarchive/Products/Applications/TypeLock.app DerivedData/Exports/TypeLock.app
+          ditto -c -k --sequesterRsrc --keepParent DerivedData/Exports/TypeLock.app TypeLock-macOS-universal.zip
+
+      - name: Generate Checksums
+        run: |
+          ASSET_NAME="TypeLock-macOS-universal.zip"
+          SHA256=$(shasum -a 256 "$ASSET_NAME" | awk '{print $1}')
+          {
+            echo "### SHA-256 Checksums"
+            echo '```'
+            echo "$SHA256  $ASSET_NAME"
+            echo '```'
+          } > checksums.txt
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: TypeLock-macOS-universal
+          path: |
+            TypeLock-macOS-universal.zip
+            checksums.txt
+          if-no-files-found: error
+          retention-days: 14

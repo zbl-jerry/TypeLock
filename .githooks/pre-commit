@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if ! command -v just >/dev/null 2>&1; then
-    echo "The TypeSwitch pre-commit hook requires just." >&2
+    echo "The TypeLock pre-commit hook requires just." >&2
     echo "Install it manually with: brew install just" >&2
     exit 1
 fi

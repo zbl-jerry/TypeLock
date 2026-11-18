@@ -4,7 +4,6 @@ set -euo pipefail
 
 ROOT_DIR=$(cd "$(dirname "$0")/.." && pwd)
 VERIFY_SCRIPT="${ROOT_DIR}/script/verify_release.sh"
-CASK_SCRIPT="${ROOT_DIR}/script/update_homebrew_cask.rb"
 ORDER_SCRIPT="${ROOT_DIR}/script/validate_release_order.rb"
 RELEASE_ABSENT_SCRIPT="${ROOT_DIR}/script/ensure_release_absent.sh"
 TEST_DIR=$(mktemp -d)
@@ -43,7 +42,7 @@ make_artifacts() {
   local build="${FIXTURE_BUILD-202608170101}"
   local appcast_build="${FIXTURE_APPCAST_BUILD:-$build}"
   local minimum="${FIXTURE_MINIMUM:-14.0}"
-  local feed_url="${FIXTURE_FEED_URL:-https://github.com/ygsgdbd/TypeSwitch/releases/latest/download/appcast.xml}"
+  local feed_url="${FIXTURE_FEED_URL:-https://github.com/zbl-jerry/TypeLock/releases/latest/download/appcast.xml}"
   local public_key="${FIXTURE_PUBLIC_KEY:-cHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHA=}"
   local signature="${FIXTURE_SIGNATURE-valid-test-signature}"
   local appcast_layout="${FIXTURE_APPCAST_LAYOUT:-child}"
@@ -51,9 +50,9 @@ make_artifacts() {
   local sha size appcast_url appcast_size version_elements enclosure_version_attributes
 
   rm -rf "$dir" "$staging"
-  mkdir -p "$dir" "${staging}/TypeSwitch.app/Contents/MacOS"
-  printf 'fixture binary\n' > "${staging}/TypeSwitch.app/Contents/MacOS/TypeSwitch"
-  cat > "${staging}/TypeSwitch.app/Contents/Info.plist" <<EOF
+  mkdir -p "$dir" "${staging}/TypeLock.app/Contents/MacOS"
+  printf 'fixture binary\n' > "${staging}/TypeLock.app/Contents/MacOS/TypeLock"
+  cat > "${staging}/TypeLock.app/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -67,12 +66,12 @@ make_artifacts() {
 </plist>
 EOF
 
-  ditto -c -k --keepParent "${staging}/TypeSwitch.app" "${dir}/TypeSwitch-macOS-universal.zip"
-  sha=$(sha256_file "${dir}/TypeSwitch-macOS-universal.zip")
-  size=$(stat -f '%z' "${dir}/TypeSwitch-macOS-universal.zip")
-  appcast_url="${FIXTURE_APPCAST_URL:-https://github.com/ygsgdbd/TypeSwitch/releases/download/${tag}/TypeSwitch-macOS-universal.zip}"
+  ditto -c -k --keepParent "${staging}/TypeLock.app" "${dir}/TypeLock-macOS-universal.zip"
+  sha=$(sha256_file "${dir}/TypeLock-macOS-universal.zip")
+  size=$(stat -f '%z' "${dir}/TypeLock-macOS-universal.zip")
+  appcast_url="${FIXTURE_APPCAST_URL:-https://github.com/zbl-jerry/TypeLock/releases/download/${tag}/TypeLock-macOS-universal.zip}"
   appcast_size="${FIXTURE_APPCAST_SIZE:-$size}"
-  printf '### SHA-256 Checksums\n```\n%s  TypeSwitch-macOS-universal.zip\n```\n' "$sha" > "${dir}/checksums.txt"
+  printf '### SHA-256 Checksums\n```\n%s  TypeLock-macOS-universal.zip\n```\n' "$sha" > "${dir}/checksums.txt"
 
   if [[ "$appcast_layout" == "attributes" ]]; then
     version_elements=""
@@ -120,7 +119,7 @@ set -euo pipefail
 
 [[ "$#" == 5 ]] || exit 99
 [[ "$1" == "api" && "$2" == "--include" && "$3" == "--jq" && "$4" == ".draft" ]] || exit 99
-[[ "$5" == "repos/ygsgdbd/TypeSwitch/releases/tags/v1.2.3" ]] || exit 99
+[[ "$5" == "repos/zbl-jerry/TypeLock/releases/tags/v1.2.3" ]] || exit 99
 
 case "${GH_STUB_MODE:-}" in
   404)
@@ -160,27 +159,27 @@ EOF
 chmod +x "${TEST_DIR}/bin/gh"
 
 PATH="${TEST_DIR}/bin:${PATH}" GH_STUB_MODE=404 \
-  "$RELEASE_ABSENT_SCRIPT" ygsgdbd/TypeSwitch v1.2.3 >/dev/null
+  "$RELEASE_ABSENT_SCRIPT" zbl-jerry/TypeLock v1.2.3 >/dev/null
 for stub_mode in 403 429 500 network invalid-200; do
   assert_fails env PATH="${TEST_DIR}/bin:${PATH}" GH_STUB_MODE="$stub_mode" \
-    "$RELEASE_ABSENT_SCRIPT" ygsgdbd/TypeSwitch v1.2.3
+    "$RELEASE_ABSENT_SCRIPT" zbl-jerry/TypeLock v1.2.3
 done
 
 DRAFT_ERROR="${TEST_DIR}/draft-release-error.txt"
 if env PATH="${TEST_DIR}/bin:${PATH}" GH_STUB_MODE=draft \
-  "$RELEASE_ABSENT_SCRIPT" ygsgdbd/TypeSwitch v1.2.3 >/dev/null 2>"$DRAFT_ERROR"; then
+  "$RELEASE_ABSENT_SCRIPT" zbl-jerry/TypeLock v1.2.3 >/dev/null 2>"$DRAFT_ERROR"; then
   fail "Draft release unexpectedly passed the release guard."
 fi
-assert_contains "$DRAFT_ERROR" 'Draft GitHub Release ygsgdbd/TypeSwitch@v1.2.3 already exists'
-assert_contains "$DRAFT_ERROR" 'gh release view v1.2.3 --repo ygsgdbd/TypeSwitch --json isDraft,url,assets'
-assert_contains "$DRAFT_ERROR" 'gh release delete v1.2.3 --repo ygsgdbd/TypeSwitch --yes'
+assert_contains "$DRAFT_ERROR" 'Draft GitHub Release zbl-jerry/TypeLock@v1.2.3 already exists'
+assert_contains "$DRAFT_ERROR" 'gh release view v1.2.3 --repo zbl-jerry/TypeLock --json isDraft,url,assets'
+assert_contains "$DRAFT_ERROR" 'gh release delete v1.2.3 --repo zbl-jerry/TypeLock --yes'
 assert_contains "$DRAFT_ERROR" 'FAILED_RUN_ID=123456789'
-assert_contains "$DRAFT_ERROR" 'gh run rerun "$FAILED_RUN_ID" --failed --repo ygsgdbd/TypeSwitch'
+assert_contains "$DRAFT_ERROR" 'gh run rerun "$FAILED_RUN_ID" --failed --repo zbl-jerry/TypeLock'
 assert_not_contains "$DRAFT_ERROR" '<failed-run-id>'
 
 PUBLISHED_ERROR="${TEST_DIR}/published-release-error.txt"
 if env PATH="${TEST_DIR}/bin:${PATH}" GH_STUB_MODE=published \
-  "$RELEASE_ABSENT_SCRIPT" ygsgdbd/TypeSwitch v1.2.3 >/dev/null 2>"$PUBLISHED_ERROR"; then
+  "$RELEASE_ABSENT_SCRIPT" zbl-jerry/TypeLock v1.2.3 >/dev/null 2>"$PUBLISHED_ERROR"; then
   fail "Published release unexpectedly passed the release guard."
 fi
 assert_contains "$PUBLISHED_ERROR" 'must not be rebuilt or overwritten'
@@ -205,7 +204,7 @@ if printf '%s\n' v1.2.3 | ruby "$ORDER_SCRIPT" v01.2.3 >/dev/null 2>&1; then
 fi
 
 make_artifacts "$ARTIFACTS" v1.2.3
-printf 'corruption\n' >> "${ARTIFACTS}/TypeSwitch-macOS-universal.zip"
+printf 'corruption\n' >> "${ARTIFACTS}/TypeLock-macOS-universal.zip"
 assert_fails env PATH="${TEST_DIR}/bin:${PATH}" "$VERIFY_SCRIPT" v1.2.3 "$ARTIFACTS"
 
 FIXTURE_PLIST_VERSION=1.2.4 make_artifacts "$ARTIFACTS" v1.2.3
@@ -221,7 +220,7 @@ make_artifacts "$ARTIFACTS" v1.2.3
 assert_fails env PATH="${TEST_DIR}/bin:${PATH}" LIPO_ARCHS=arm64 "$VERIFY_SCRIPT" v1.2.3 "$ARTIFACTS"
 FIXTURE_APPCAST_BUILD=wrong-build make_artifacts "$ARTIFACTS" v1.2.3
 assert_fails env PATH="${TEST_DIR}/bin:${PATH}" "$VERIFY_SCRIPT" v1.2.3 "$ARTIFACTS"
-FIXTURE_APPCAST_URL=https://example.invalid/TypeSwitch.zip make_artifacts "$ARTIFACTS" v1.2.3
+FIXTURE_APPCAST_URL=https://example.invalid/TypeLock.zip make_artifacts "$ARTIFACTS" v1.2.3
 assert_fails env PATH="${TEST_DIR}/bin:${PATH}" "$VERIFY_SCRIPT" v1.2.3 "$ARTIFACTS"
 FIXTURE_APPCAST_SIZE=1 make_artifacts "$ARTIFACTS" v1.2.3
 assert_fails env PATH="${TEST_DIR}/bin:${PATH}" "$VERIFY_SCRIPT" v1.2.3 "$ARTIFACTS"
@@ -232,31 +231,8 @@ assert_fails env PATH="${TEST_DIR}/bin:${PATH}" "$VERIFY_SCRIPT" v1.2.3 "$ARTIFA
 FIXTURE_PUBLIC_KEY=eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHg= make_artifacts "$ARTIFACTS" v1.2.3
 assert_fails env PATH="${TEST_DIR}/bin:${PATH}" "$VERIFY_SCRIPT" v1.2.3 "$ARTIFACTS"
 
-make_artifacts "$ARTIFACTS" v1.2.3
-CASK="${TEST_DIR}/typeswitch.rb"
-SHA=$(sha256_file "${ARTIFACTS}/TypeSwitch-macOS-universal.zip")
-cat > "$CASK" <<EOF
-cask "typeswitch" do
-  version "1.2.3"
-  sha256 "$(printf '0%.0s' {1..64})"
-  url "https://example.invalid/TypeSwitch.zip"
-end
-EOF
-
-ruby "$CASK_SCRIPT" "$CASK" v1.2.4 "$SHA" >/dev/null
-assert_contains "$CASK" '  version "1.2.4"'
-assert_contains "$CASK" "  sha256 \"${SHA}\""
-assert_contains "$CASK" '  url "https://github.com/ygsgdbd/TypeSwitch/releases/download/v1.2.4/TypeSwitch-macOS-universal.zip"'
-EXPECTED_CASK=$(cat "$CASK")
-ruby "$CASK_SCRIPT" "$CASK" v1.2.4 "$SHA" >/dev/null
-[[ "$(cat "$CASK")" == "$EXPECTED_CASK" ]] || fail "Cask updater is not idempotent."
-assert_fails ruby "$CASK_SCRIPT" "$CASK" v1.2.3 "$SHA"
-[[ "$(cat "$CASK")" == "$EXPECTED_CASK" ]] || fail "Cask updater modified the file during a rejected downgrade."
-assert_fails ruby "$CASK_SCRIPT" "$CASK" 1.2.3 "$SHA"
-printf '  version "9.9.9"\n' >> "$CASK"
-assert_fails ruby "$CASK_SCRIPT" "$CASK" v1.2.3 "$SHA"
-
 WORKFLOW="${ROOT_DIR}/.github/workflows/release.yml"
+BUILD_WORKFLOW="${ROOT_DIR}/.github/workflows/build.yml"
 PR_WORKFLOW="${ROOT_DIR}/.github/workflows/pr-checks.yml"
 JUSTFILE="${ROOT_DIR}/justfile"
 
@@ -270,16 +246,17 @@ JOB_NAMES=$(awk '
     print name
   }
 ' "$WORKFLOW")
-[[ "$JOB_NAMES" == $'publish\nhomebrew' ]] || fail "Release workflow must contain only publish and homebrew jobs; got: $JOB_NAMES"
+[[ "$JOB_NAMES" == "publish" ]] || fail "Release workflow must contain only the publish job; got: $JOB_NAMES"
 
 assert_contains "$WORKFLOW" 'group: release-${{ github.repository }}'
 assert_contains "$WORKFLOW" 'cancel-in-progress: false'
 assert_not_contains "$WORKFLOW" 'queue:'
 assert_contains "$WORKFLOW" 'git fetch --force origin "refs/tags/${RELEASE_TAG}:refs/tags/${RELEASE_TAG}"'
-assert_contains "$WORKFLOW" "git tag --merged origin/main --list 'v*'"
+assert_contains "$WORKFLOW" "git tag --merged origin/dev --list 'v*'"
+assert_contains "$WORKFLOW" 'git merge-base --is-ancestor "$TAG_COMMIT" origin/dev'
 assert_contains "$WORKFLOW" 'ruby script/validate_release_order.rb "$RELEASE_TAG"'
 assert_contains "$WORKFLOW" 'script/ensure_release_absent.sh "$GITHUB_REPOSITORY" "$RELEASE_TAG"'
-assert_contains "$WORKFLOW" 'cp release-notes.md DerivedData/SparkleFeed/TypeSwitch-macOS-universal.md'
+assert_contains "$WORKFLOW" 'cp release-notes.md DerivedData/SparkleFeed/TypeLock-macOS-universal.md'
 assert_contains "$WORKFLOW" '--embed-release-notes'
 assert_contains "$WORKFLOW" 'script/verify_release.sh "$RELEASE_TAG" .'
 assert_contains "$WORKFLOW" 'overwrite_files: false'
@@ -292,8 +269,10 @@ assert_not_contains "$WORKFLOW" 'name: Test release scripts'
 assert_not_contains "$WORKFLOW" 'Validate Homebrew tap access'
 assert_not_contains "$WORKFLOW" 'gh api markdown'
 assert_not_contains "$WORKFLOW" 'release-notes.html'
-[[ "$(grep -Fc 'secrets.HOMEBREW_TAP_TOKEN' "$WORKFLOW")" == "1" ]] || fail "Homebrew token must appear only in the tap checkout."
+assert_not_contains "$WORKFLOW" 'HOMEBREW_TAP_TOKEN'
+assert_not_contains "$WORKFLOW" 'update_homebrew_cask.rb'
 [[ ! -e "${ROOT_DIR}/script/validate_release_version.rb" ]] || fail "Obsolete release version helper still exists."
+[[ ! -e "${ROOT_DIR}/script/update_homebrew_cask.rb" ]] || fail "Homebrew cask updater should not ship in the fork."
 
 RESTORE_TAG_LINE=$(grep -nF -- 'name: Restore annotated release tag' "$WORKFLOW" | cut -d: -f1)
 VALIDATE_TAG_LINE=$(grep -nF -- 'name: Validate release tag' "$WORKFLOW" | cut -d: -f1)
@@ -308,6 +287,11 @@ fi
 assert_contains "$PR_WORKFLOW" 'release-scripts:'
 assert_contains "$PR_WORKFLOW" 'run: actionlint .github/workflows/*.yml'
 assert_contains "$PR_WORKFLOW" 'run: script/test_release_scripts.sh'
+assert_contains "$BUILD_WORKFLOW" 'workflow_dispatch:'
+assert_contains "$BUILD_WORKFLOW" '- dev'
+assert_contains "$BUILD_WORKFLOW" 'TypeLock.xcodeproj'
+assert_contains "$BUILD_WORKFLOW" 'TypeLock-macOS-universal.zip'
+assert_contains "$BUILD_WORKFLOW" 'actions/upload-artifact@v7'
 assert_contains "$JUSTFILE" 'test-release-scripts:'
 
 echo "Release script tests passed."

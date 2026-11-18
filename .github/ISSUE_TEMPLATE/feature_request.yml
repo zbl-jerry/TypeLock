@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest an improvement for TypeSwitch
+description: Suggest an improvement for TypeLock
 title: "[Feature] "
 labels:
   - enhancement
@@ -30,7 +30,7 @@ body:
     id: desired_behavior
     attributes:
       label: 期望行为 / Desired behavior
-      description: 请从用户角度说明期望 TypeSwitch 如何运行。
+      description: 请从用户角度说明期望 TypeLock 如何运行。
     validations:
       required: true
 

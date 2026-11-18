@@ -93,7 +93,7 @@ func captureContent() async throws {
         throw NSError(
             domain: "ReadmeMenuWindows",
             code: 1,
-            userInfo: [NSLocalizedDescriptionKey: "Unable to find the selected display or TypeSwitch process."]
+            userInfo: [NSLocalizedDescriptionKey: "Unable to find the selected display or TypeLock process."]
         )
     }
 
@@ -235,7 +235,7 @@ case .windows:
     }
 
     guard !windows.isEmpty else {
-        fputs("No new menu windows were found after opening TypeSwitch.\n", stderr)
+        fputs("No new menu windows were found after opening TypeLock.\n", stderr)
         exit(1)
     }
 

@@ -6,7 +6,7 @@ let appVersion = Environment.appVersion.getString(default: "0.0.0")
 let buildVersion = Environment.buildVersion.getString(default: "0")
 
 let project = Project(
-    name: "TypeSwitch",
+    name: "TypeLock",
     options: .options(
         defaultKnownRegions: ["zh-Hans", "zh-Hant", "en"],
         developmentRegion: "zh-Hans"
@@ -38,10 +38,10 @@ let project = Project(
     ),
     targets: [
         .target(
-            name: "TypeSwitch",
+            name: "TypeLock",
             destinations: .macOS,
             product: .app,
-            bundleId: "top.ygsgdbd.TypeSwitch",
+            bundleId: "io.github.zbl-jerry.TypeLock",
             deploymentTargets: .macOS("14.0"),
             infoPlist: .dictionary([
                 "LSUIElement": true, // 设置为纯菜单栏应用
@@ -53,21 +53,21 @@ let project = Project(
                 "CFBundleName": "$(PRODUCT_NAME)",
                 "CFBundlePackageType": "APPL",
                 "AppleLanguages": ["zh-Hans"], // 设置默认语言为简体中文
-                "NSHumanReadableCopyright": "Copyright © 2024 ygsgdbd. All rights reserved.",
+                "NSHumanReadableCopyright": "Copyright © 2026 zbl-jerry. All rights reserved.",
                 "LSApplicationCategoryType": "public.app-category.utilities",
                 "LSMinimumSystemVersion": "14.0",
                 "NSPrincipalClass": "NSApplication",
                 "CFBundleShortVersionString": .string(appVersion), // 市场版本号
                 "CFBundleVersion": .string(buildVersion), // 构建版本号
-                "SUFeedURL": "https://github.com/ygsgdbd/TypeSwitch/releases/latest/download/appcast.xml",
-                "SUPublicEDKey": "tzapCS0NiXBf0Alm3T2veTCaauxr2dmMCnIFYaK+lOs=",
+                "SUFeedURL": "https://github.com/zbl-jerry/TypeLock/releases/latest/download/appcast.xml",
+                "SUPublicEDKey": "DptenP/WN+2Tz4Q6A7M9P2FGM5/rqXfeO1D5i1L6x10=",
                 "SUAllowsAutomaticUpdates": false,
                 "SUEnableAutomaticChecks": true,
                 "SUAutomaticallyUpdate": false,
             ]),
-            sources: ["TypeSwitch/Sources/**"],
-            resources: ["TypeSwitch/Resources/**"],
-            entitlements: .file(path: "Tuist/Signing/TypeSwitch.entitlements"),
+            sources: ["TypeLock/Sources/**"],
+            resources: ["TypeLock/Resources/**"],
+            entitlements: .file(path: "Tuist/Signing/TypeLock.entitlements"),
             dependencies: [
                 .package(product: "CasePaths"),
                 .package(product: "ComposableArchitecture"),
@@ -92,16 +92,16 @@ let project = Project(
             )
         ),
         .target(
-            name: "TypeSwitchTests",
+            name: "TypeLockTests",
             destinations: .macOS,
             product: .unitTests,
-            bundleId: "top.ygsgdbd.TypeSwitchTests",
+            bundleId: "io.github.zbl-jerry.TypeLockTests",
             deploymentTargets: .macOS("14.0"),
             infoPlist: .default,
-            sources: ["TypeSwitchTests/**"],
+            sources: ["TypeLockTests/**"],
             dependencies: [
                 .package(product: "CasePaths"),
-                .target(name: "TypeSwitch"),
+                .target(name: "TypeLock"),
                 .package(product: "ComposableArchitecture"),
                 .package(product: "Dependencies"),
                 .package(product: "Sharing"),
@@ -110,8 +110,8 @@ let project = Project(
                 base: [
                     "BUNDLE_LOADER": "$(TEST_HOST)",
                     "SWIFT_VERSION": "5.9",
-                    "TEST_HOST": "$(BUILT_PRODUCTS_DIR)/TypeSwitch.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TypeSwitch",
-                    "TEST_TARGET_NAME": "TypeSwitch",
+                    "TEST_HOST": "$(BUILT_PRODUCTS_DIR)/TypeLock.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TypeLock",
+                    "TEST_TARGET_NAME": "TypeLock",
                 ],
                 configurations: [
                     .debug(name: "Debug"),

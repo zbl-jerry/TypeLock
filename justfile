@@ -27,7 +27,7 @@ format-staged: check-swiftformat
         exit 0
     fi
 
-    temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/typeswitch-swiftformat.XXXXXX")"
+    temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/typelock-swiftformat.XXXXXX")"
     trap 'rm -rf "$temp_dir"' EXIT
 
     original_files=()
@@ -87,8 +87,8 @@ lint-ci: check-swiftformat
 test: check-tuist
     tuist generate --no-open
     xcodebuild test \
-        -project TypeSwitch.xcodeproj \
-        -scheme TypeSwitch \
+        -project TypeLock.xcodeproj \
+        -scheme TypeLock \
         -destination 'platform=macOS' \
         -testLanguage zh-Hans \
         -skipPackagePluginValidation \

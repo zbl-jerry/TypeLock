@@ -2,11 +2,11 @@
 
 set -euo pipefail
 
-ASSET_NAME="TypeSwitch-macOS-universal.zip"
+ASSET_NAME="TypeLock-macOS-universal.zip"
 CHECKSUMS_NAME="checksums.txt"
 APPCAST_NAME="appcast.xml"
 EXPECTED_MINIMUM_SYSTEM_VERSION="14.0"
-EXPECTED_FEED_URL="https://github.com/ygsgdbd/TypeSwitch/releases/latest/download/appcast.xml"
+EXPECTED_FEED_URL="https://github.com/zbl-jerry/TypeLock/releases/latest/download/appcast.xml"
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 RELEASE_TAG="${1:-}"
 ARTIFACT_DIR="${2:-.}"
@@ -115,11 +115,11 @@ ACTUAL_SHA256=$(sha256_file "$ZIP_PATH")
 
 TEMP_DIR=$(mktemp -d)
 ditto -x -k "$ZIP_PATH" "$TEMP_DIR" || fail "Unable to extract ${ASSET_NAME}."
-APP_PATH="${TEMP_DIR}/TypeSwitch.app"
+APP_PATH="${TEMP_DIR}/TypeLock.app"
 INFO_PLIST="${APP_PATH}/Contents/Info.plist"
-BINARY_PATH="${APP_PATH}/Contents/MacOS/TypeSwitch"
-[[ -f "$INFO_PLIST" ]] || fail "Release archive is missing TypeSwitch.app/Contents/Info.plist."
-[[ -f "$BINARY_PATH" ]] || fail "Release archive is missing the TypeSwitch executable."
+BINARY_PATH="${APP_PATH}/Contents/MacOS/TypeLock"
+[[ -f "$INFO_PLIST" ]] || fail "Release archive is missing TypeLock.app/Contents/Info.plist."
+[[ -f "$BINARY_PATH" ]] || fail "Release archive is missing the TypeLock executable."
 
 VERSION="${RELEASE_TAG#v}"
 BUNDLE_VERSION=$(plist_value CFBundleShortVersionString "$INFO_PLIST")
@@ -132,11 +132,11 @@ PUBLIC_KEY=$(plist_value SUPublicEDKey "$INFO_PLIST")
 [[ "$MINIMUM_SYSTEM_VERSION" == "$EXPECTED_MINIMUM_SYSTEM_VERSION" ]] || fail "Minimum system version mismatch: expected ${EXPECTED_MINIMUM_SYSTEM_VERSION}, got ${MINIMUM_SYSTEM_VERSION}."
 [[ "$FEED_URL" == "$EXPECTED_FEED_URL" ]] || fail "Sparkle feed URL mismatch: expected ${EXPECTED_FEED_URL}, got ${FEED_URL}."
 
-ARCHITECTURES=$(lipo -archs "$BINARY_PATH") || fail "Unable to inspect TypeSwitch binary architectures."
+ARCHITECTURES=$(lipo -archs "$BINARY_PATH") || fail "Unable to inspect TypeLock binary architectures."
 [[ " $ARCHITECTURES " == *" arm64 "* && " $ARCHITECTURES " == *" x86_64 "* ]] || fail "Expected arm64 and x86_64, got ${ARCHITECTURES}."
 
 EXPECTED_SIZE=$(stat -f '%z' "$ZIP_PATH")
-EXPECTED_URL="https://github.com/ygsgdbd/TypeSwitch/releases/download/${RELEASE_TAG}/${ASSET_NAME}"
+EXPECTED_URL="https://github.com/zbl-jerry/TypeLock/releases/download/${RELEASE_TAG}/${ASSET_NAME}"
 SIGNATURE=$(verify_appcast "$APPCAST_PATH" "$VERSION" "$BUILD" "$EXPECTED_URL" "$EXPECTED_SIZE") || fail "${APPCAST_NAME} does not match the app bundle and release artifact."
 
 SIGN_UPDATE="${SPARKLE_SIGN_UPDATE:-${SCRIPT_DIR}/../sparkle-tools/bin/sign_update}"

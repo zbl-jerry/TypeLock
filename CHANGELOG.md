@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### 🇨🇳 中文
+
+#### 变更
+
+- TypeLock 从 TypeSwitch 分叉，`main` 分支用于追踪上游，`dev` 分支用于二次开发和发布。
+- 品牌名称、应用名、target、模块、bundle ID、Sparkle 更新源和支持链接已改为 TypeLock。
+- `dev` 分支新增完整构建 workflow；发布 workflow 仅接受包含于 `dev` 的 annotated `vX.Y.Z` tag，并移除了上游 Homebrew cask 发布步骤。
+
+### 🇺🇸 English
+
+#### Changes
+
+- Forked TypeLock from TypeSwitch. `main` now tracks upstream, while `dev` carries TypeLock development and releases.
+- Renamed the brand, app, targets, module, bundle identifier, Sparkle feed, and support links to TypeLock.
+- Added a full Build workflow for `dev`; the release workflow now only accepts annotated `vX.Y.Z` tags contained in `dev` and no longer updates the upstream Homebrew cask.
+
 ## v0.10.3
 
 ### 🇨🇳 中文
